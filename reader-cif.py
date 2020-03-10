@@ -1,20 +1,23 @@
 #   reader-cif.py
 #       simple .cif file reader that extracts all necessary data from the file
+#       +hamiltonian +spectra    
 #   Python 3.8 + math, numpy
 #
 #   Written by Igor Koskin
 #   e-mail: osingran@yandex.ru
 #
-#   last update: 06.03.2020
-#   version: 0.01
+#   last update: 10.03.2020
+#   version: 0.02
 
 
 import math
 import numpy as np
+import time
+import matplotlib.pyplot as plt
 
 nucl = ["H", "C", "O"]
 nucl_mass = [1, 12, 16]
-nucl_vdw = [0.120, 0.170, 0.152]
+nucl_vdw = [1.20, 1.70, 1.52]
 precision = 1
 
 
@@ -56,7 +59,7 @@ class Molecule:
         self.inertia_tensor = np.zeros((3, 3))
         self.inertia_eig_val = np.zeros((3, 1))
         self.inertia_eig_vec = np.zeros((3, 3))
-        self.threshold = 0.0
+        self.threshold = 0.1
 
     def inside(self):
         a1 = 1 + self.threshold
@@ -313,6 +316,8 @@ class CellSymmetry:
 class CifFile:
 
     def __init__(self, init_path=""):
+        print("Read CIF File")
+        cif_time = time.time()
         file = open(init_path, "r")
         contents = file.readlines()
         file.close()
@@ -343,7 +348,8 @@ class CifFile:
                     if words[0] == "_space_group_IT_number" and self.it_number != 0:
                         self.it_number = int(words[1])
                         symmetry_detected = True
-                    if words[0] == "_symmetry_space_group_name_H-M_alt" or words[0] == "_symmetry_space_group_name_Hall" or \
+                    if words[0] == "_symmetry_space_group_name_H-M_alt" or words[
+                        0] == "_symmetry_space_group_name_Hall" or \
                             words[0] == "_symmetry_space_group_name_H-M":
                         words[1].replace("'", "")
                         if words[0] == "_symmetry_space_group_name_H-M_alt" and symmetry_detected is False:
@@ -401,3 +407,243 @@ class CifFile:
         self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
         self.transform[2, 2] = self.cell_c * volume / sing
         self.rev_transform = np.linalg.inv(self.transform)
+        print("   Done: %s" % (time.time() - cif_time))
+
+
+class Cluster:
+
+    def build(self, t_number: int):
+        print("Build pre-cluster")
+        pre_cluster_time = time.time()
+        cell = CellSymmetry(t_number)
+        i = 0
+        while i < len(self.pre_molecules):
+            if not cell.no_inverses:
+                for i1 in range(cell.inverses.shape[0]):
+                    new_molecule = Molecule(self.cif.asym_unit.num_atoms)
+                    copy_molecule(self.pre_molecules[i], new_molecule)
+                    new_molecule.inverse(cell.inverses[i1, 0], cell.inverses[i1, 1], cell.inverses[i1, 2])
+                    coincide = False
+                    for i3 in range(len(self.pre_molecules)):
+                        if molecule_coincide(self.pre_molecules[i3], new_molecule):
+                            coincide = True
+                    if new_molecule.inside() and not coincide:
+                        self.pre_molecules.append(new_molecule)
+            if not cell.no_rotations:
+                for i1 in range(cell.mirrors.shape[0]):
+                    new_molecule = Molecule(self.cif.asym_unit.num_atoms)
+                    copy_molecule(self.pre_molecules[i], new_molecule)
+                    new_molecule.mirror(cell.mirrors[i1, 0], cell.mirrors[i1, 1])
+                    coincide = False
+                    for i3 in range(len(self.pre_molecules)):
+                        if molecule_coincide(self.pre_molecules[i3], new_molecule):
+                            coincide = True
+                    if new_molecule.inside() and not coincide:
+                        self.pre_molecules.append(new_molecule)
+            if not cell.no_screws:
+                for i1 in range(cell.screws.shape[0]):
+                    for i4 in range(1, int(cell.screws[i1, 1])):
+                        new_molecule = Molecule(self.cif.asym_unit.num_atoms)
+                        copy_molecule(self.pre_molecules[i], new_molecule)
+                        step = i4 * (1 / cell.screws[i1, 1])
+                        new_molecule.screw(cell.screws[i1, 0], cell.screws[i1, 1], step, cell.screws[i1, 2],
+                                           cell.screws[i1, 3])
+                        coincide = False
+                        for i3 in range(len(self.pre_molecules)):
+                            if molecule_coincide(self.pre_molecules[i3], new_molecule):
+                                coincide = True
+                        if new_molecule.inside() and not coincide:
+                            self.pre_molecules.append(new_molecule)
+            # if not cell.no_glides:
+            #    for i1 in range(cell.glides.shape[0]):
+            #        new_molecule = mol.Molecule(23)
+            #        mol.copy_molecule(cluster[i], new_molecule)
+            #        new_molecule.glide(cell.glides[i1, 0], 0.5, cell.glides[i1, 1])
+            #        coincide = False
+            #        for i3 in range(len(cluster)):
+            #            if mol.molecule_coincide(cluster[i3], new_molecule):
+            #                coincide = True
+            #        if new_molecule.inside() and not coincide:
+            #            cluster.append(new_molecule)
+            #        del new_molecule
+            i = i + 1
+        print("   Done: %s" % (time.time() - pre_cluster_time))
+
+    def rebuild(self):
+        print("Build connectivity matrix")
+        connectivity_time = time.time()
+        bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+                          self.pre_molecules[0].num_atoms))
+        for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                m1 = n // self.pre_molecules[0].num_atoms
+                m1n = n % self.pre_molecules[0].num_atoms
+                m2 = k // self.pre_molecules[0].num_atoms
+                m2n = k % self.pre_molecules[0].num_atoms
+                v1 = np.zeros((3, 1))
+                v2 = np.zeros((3, 1))
+                v1[0, 0] = self.pre_molecules[m1].atom_coord[m1n, 0]
+                v1[1, 0] = self.pre_molecules[m1].atom_coord[m1n, 1]
+                v1[2, 0] = self.pre_molecules[m1].atom_coord[m1n, 2]
+                v2[0, 0] = self.pre_molecules[m2].atom_coord[m2n, 0]
+                v2[1, 0] = self.pre_molecules[m2].atom_coord[m2n, 1]
+                v2[2, 0] = self.pre_molecules[m2].atom_coord[m2n, 2]
+                dv = v1 - v2
+                dist = np.linalg.norm(dv)
+                if self.pre_molecules[m1].atom_label[m1n] == "C" and self.pre_molecules[m2].atom_label[m2n] == "C":
+                    limit = 1.5
+                elif self.pre_molecules[m1].atom_label[m1n] == "C" and self.pre_molecules[m2].atom_label[m2n] == "H":
+                    limit = 1.0
+                elif self.pre_molecules[m1].atom_label[m1n] == "H" and self.pre_molecules[m2].atom_label[m2n] == "C":
+                    limit = 1.0
+                elif self.pre_molecules[m1].atom_label[m1n] == "C" and self.pre_molecules[m2].atom_label[m2n] == "O":
+                    limit = 1.4
+                elif self.pre_molecules[m1].atom_label[m1n] == "O" and self.pre_molecules[m2].atom_label[m2n] == "C":
+                    limit = 1.4
+                else:
+                    pass
+                if dist <= limit:
+                    bonds[n, k] = 1
+                    bonds[k, n] = 1
+        print("   Done: %s" % (time.time() - connectivity_time))
+        print("Finalize cluster")
+        f_cluster_time = time.time()
+        au_bonds = np.zeros((len(self.pre_molecules), len(self.pre_molecules)))
+        connected = False
+        for i1 in range(len(self.pre_molecules)):
+            for i2 in range(i1 + 1, len(self.pre_molecules)):
+                if connected:
+                    connected = False
+                    break
+                for i3 in range(self.pre_molecules[0].num_atoms):
+                    if connected:
+                        break
+                    for i4 in range(self.pre_molecules[0].num_atoms):
+                        if bonds[i1 * self.pre_molecules[0].num_atoms + i3, i2 * self.pre_molecules[0].num_atoms + i4] == 1:
+                            au_bonds[i1, i2] = 1
+                            au_bonds[i2, i1] = 1
+                            connected = True
+                            break
+        self.molecules = []
+        for i1 in range(len(self.pre_molecules)):
+            for i2 in range(len(self.pre_molecules)):
+                if au_bonds[i1, i2] == 1:
+                    au_bonds[i1, i2] = 0
+                    au_bonds[i2, i1] = 0
+                    self.molecules.append(Molecule(self.pre_molecules[0].num_atoms * 2))
+                    for i3 in range(self.pre_molecules[0].num_atoms):
+                        self.molecules[len(self.molecules) - 1].atom_label.append(self.pre_molecules[i1].atom_label[i3])
+                        self.molecules[len(self.molecules) - 1].atom_coord[i3, 0] = \
+                            self.pre_molecules[i1].atom_coord[i3, 0]
+                        self.molecules[len(self.molecules) - 1].atom_coord[i3, 1] = \
+                            self.pre_molecules[i1].atom_coord[i3, 1]
+                        self.molecules[len(self.molecules) - 1].atom_coord[i3, 2] = \
+                            self.pre_molecules[i1].atom_coord[i3, 2]
+                    for i3 in range(self.pre_molecules[0].num_atoms):
+                        self.molecules[len(self.molecules) - 1].atom_label.append(self.pre_molecules[i2].atom_label[i3])
+                        self.molecules[len(self.molecules) - 1].atom_coord[i3 + self.pre_molecules[0].num_atoms, 0] = \
+                            self.pre_molecules[i2].atom_coord[i3, 0]
+                        self.molecules[len(self.molecules) - 1].atom_coord[i3 + self.pre_molecules[0].num_atoms, 1] = \
+                            self.pre_molecules[i2].atom_coord[i3, 1]
+                        self.molecules[len(self.molecules) - 1].atom_coord[i3 + self.pre_molecules[0].num_atoms, 2] = \
+                            self.pre_molecules[i2].atom_coord[i3, 2]
+        print("   Done: %s" % (time.time() - f_cluster_time))
+
+    def simplify(self):
+        print("Simplify cluster")
+        simp_time = time.time()
+        self.mass_centers = np.zeros((len(self.molecules), 3))
+        for i in range(len(self.molecules)):
+            v = self.molecules[i].mass_center()
+            self.mass_centers[i, 0] = v[0, 0]
+            self.mass_centers[i, 1] = v[1, 0]
+            self.mass_centers[i, 2] = v[2, 0]
+        print("   Done: %s" % (time.time() - simp_time))
+
+
+    def to_cartesian(self):
+        for i1 in range(len(self.pre_molecules)):
+            for i in range(23):
+                vector = np.zeros((3, 1))
+                vector[0, 0] = self.pre_molecules[i1].atom_coord[i, 0]
+                vector[1, 0] = self.pre_molecules[i1].atom_coord[i, 1]
+                vector[2, 0] = self.pre_molecules[i1].atom_coord[i, 2]
+                vector = np.matmul(self.cif.transform, vector)
+                self.pre_molecules[i1].atom_coord[i, 0] = vector[0, 0]
+                self.pre_molecules[i1].atom_coord[i, 1] = vector[1, 0]
+                self.pre_molecules[i1].atom_coord[i, 2] = vector[2, 0]
+
+    def __init__(self, a: int, b: int, c: int, path: str):
+        self.pre_molecules = []
+        self.cif = CifFile(path)
+        self.pre_molecules.append(self.cif.asym_unit)
+        self.build(self.cif.it_number)
+        self.to_cartesian()
+        self.rebuild()
+        self.simplify()
+
+
+cl = Cluster(1, 1, 1, "D:\[work]\Kujo\KES48.cif")
+print("Calculate Hamiltinian")
+h_time = time.time()
+mu = np.zeros((1, 3))
+mu[0, 0] = 5.09777
+mu[0, 1] = 0.07312
+mu[0, 2] = 0.04931
+A = 219500 # Hartree to cm-1
+bohr3 = 0.529177210  # bohr in Å
+H = np.zeros((len(cl.molecules), len(cl.molecules)))
+for n1 in range(len(cl.molecules)):
+    for m1 in range(n1 + 1, len(cl.molecules)):
+        v1_o = np.zeros((1, 3))
+        v2_o = np.zeros((1, 3))
+        v1_o[0, 0] = cl.mass_centers[n1, 0]
+        v1_o[0, 1] = cl.mass_centers[n1, 1]
+        v1_o[0, 2] = cl.mass_centers[n1, 2]
+        v2_o[0, 0] = cl.mass_centers[m1, 0]
+        v2_o[0, 1] = cl.mass_centers[m1, 1]
+        v2_o[0, 2] = cl.mass_centers[m1, 2]
+        dv1 = v1_o - v2_o
+        r1 = np.linalg.norm(dv1)
+        r1 = r1 / bohr3
+        r3 = r1*r1*r1
+        r5 = r3*r1*r1
+        J = np.inner(mu, mu)/r3 + (np.inner(mu, dv1)*np.inner(dv1, mu))/r5
+        H[n1, m1] = J*A
+        H[m1, n1] = H[n1, m1]
+print("   Done: %s" % (time.time() - h_time))
+mu_a = np.zeros((len(cl.molecules), 3))
+for x in range(len(cl.molecules)):
+    mu_a[x, 0] = mu[0, 0]
+    mu_a[x, 1] = mu[0, 1]
+    mu_a[x, 2] = mu[0, 2]
+E, c = np.linalg.eig(H)
+bins = 1000
+sigma = 100000
+EminA = np.min(E)
+EmaxA = np.max(E)
+print(EmaxA)
+Emin = EminA - 0.1 * (EmaxA - EminA) - 3 * sigma
+Emax = EmaxA + 0.1 * (EmaxA - EminA) + 3 * sigma
+dE = (Emax - Emin) / bins
+Ex = np.linspace(Emin, Emax, bins)
+Ey = np.zeros(bins)
+for n1 in range(len(cl.molecules)):
+    bin = int(round((E[n1] - Emin) / dE))
+    Emu = np.zeros(3)
+    Emu[0] = np.inner(c[:, n1], mu_a[:, 0])
+    Emu[1] = np.inner(c[:, n1], mu_a[:, 1])
+    Emu[2] = np.inner(c[:, n1], mu_a[:, 2])
+    Ey[bin] = Ey[bin] + np.linalg.norm(Emu) ** 2
+
+# Convolute spectrum
+# First create normalized Gaussian centered in the middle
+Cx=Ex-(Emax+Emin)/2 # Make new axis with value zero in the middle of array
+Cy=np.exp(-Cx**2/2/sigma**2)/np.sqrt(2*np.pi*sigma**2)
+# Do the actual convolusion
+Ny=np.convolve(Ey,Cy,mode='same')
+# Plot everything in one final plot
+plt.plot(Ex,Ey/np.max(Ey))
+#plt.plot(Ex,Cy/np.max(Cy))
+plt.plot(Ex,Ny/np.max(Ny))
+plt.show()
