@@ -326,6 +326,8 @@ class CifFile:
         symmetry_detected = False
         for x in contents:
             index = index + 1
+            if x[0] == "#":
+                continue
             words = x.split()
             if len(words) != 0:
                 for i in range(len(words)):
@@ -345,7 +347,7 @@ class CifFile:
                         self.cell_gamma = periodic_to_float(words[1], precision)
                     if words[0] == "_cell_angle_volume":
                         self.cell_volume = periodic_to_float(words[1], precision)
-                    if words[0] == "_space_group_IT_number" and self.it_number != 0:
+                    if words[0] == "_space_group_IT_number" and symmetry_detected is False:
                         self.it_number = int(words[1])
                         symmetry_detected = True
                     if words[0] == "_symmetry_space_group_name_H-M_alt" or words[
@@ -362,10 +364,11 @@ class CifFile:
                     index_loop = index + 1
                     s = contents[index_loop]
                     loop_list = []
-                    while s != " \n":
+                    while s != "" and s != "loop_":
                         loop_list.append(s)
                         index_loop = index_loop + 1
                         s = contents[index_loop]
+                        s = s.strip()
                     type_pos = 0
                     fract_x_pos = 0
                     fract_y_pos = 0
@@ -583,5 +586,5 @@ class Cluster:
         self.simplify()
 
 
-cl = Cluster(1, 1, 1, "D:\[work]\Kujo\KES48.cif")
-
+file_path = input("CIF file path: ")
+cl = Cluster(1, 1, 1, file_path)  # D:\[work]\CIF\p21c\FP4.cif
