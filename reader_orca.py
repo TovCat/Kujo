@@ -21,11 +21,12 @@ def read_orca(path: str):
                 index = index + 1
                 s = contents[index]
         if x.find("ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS") != -1:
+            index = contents.index(x)
             s = contents[index + 5]
             words = s.split()
             for i in range(3):
                 mu[i, 0] = float(words[i + 5])
-                break
+            break
     orca_molecule = rc.Molecule(len(coord_list))
     for x in coord_list:
         index = coord_list.index(x)
@@ -33,5 +34,5 @@ def read_orca(path: str):
         orca_molecule.atom_label.append(words[0])
         for i in range(3):
             orca_molecule.atom_coord[index, i] = float(words[i + 1])
-
+    orca_molecule.inertia()
     return orca_molecule, mu

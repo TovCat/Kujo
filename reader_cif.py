@@ -210,6 +210,10 @@ class Molecule:
         self.inertia_tensor[2, 1] = yz
         self.inertia_tensor[2, 2] = zz
         self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
+        self.inertia_eig_val = self.inertia_eig_val / self.inertia_eig_val.max()
+        for n in range(3):
+            for m in range(3):
+                self.inertia_eig_vec[n, m] = self.inertia_eig_vec[n, m] * self.inertia_eig_val[n]
 
 
 def copy_molecule(m1, m2: Molecule):
@@ -561,6 +565,7 @@ class Cluster:
             self.mass_centers[i, 0] = v[0, 0]
             self.mass_centers[i, 1] = v[1, 0]
             self.mass_centers[i, 2] = v[2, 0]
+            self.molecules[i].inertia()
         print("   Done: %s" % (time.time() - simp_time))
 
     def to_cartesian(self):
