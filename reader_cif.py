@@ -17,10 +17,9 @@ import time
 nucl = ["H", "C", "O"]
 nucl_mass = [1, 12, 16]
 nucl_vdw = [1.20, 1.70, 1.52]
-precision = 1
 
 
-def periodic_to_float(number, count=0):
+def periodic_to_float(number, count=1):
     if number.find("(") == -1:
         return float(number)
     else:
@@ -75,16 +74,12 @@ class Molecule:
         return r
 
     def inverse(self, x_i, y_i, z_i):
-        for i in range(self.num_atoms):
-            self.atom_coord[i, 0] = self.atom_coord[i, 0] + 2 * (x_i - self.atom_coord[i, 0])
-            self.atom_coord[i, 1] = self.atom_coord[i, 1] + 2 * (y_i - self.atom_coord[i, 1])
-            self.atom_coord[i, 2] = self.atom_coord[i, 2] + 2 * (z_i - self.atom_coord[i, 2])
+        v = np.array([x_i, y_i, z_i])
+        self.atom_coord = 2 * v - self.atom_coord
 
     def translate(self, x_t, y_t, z_t):
-        for i in range(self.num_atoms):
-            self.atom_coord[i, 0] = self.atom_coord[i, 0] + x_t
-            self.atom_coord[i, 1] = self.atom_coord[i, 1] + y_t
-            self.atom_coord[i, 2] = self.atom_coord[i, 2] + z_t
+        v = np.array([x_t, y_t, z_t])
+        self.atom_coord = self.atom_coord + v
 
     def mirror(self, axis, c1):
         for i in range(self.num_atoms):
@@ -94,9 +89,7 @@ class Molecule:
         angle = np.deg2rad(360 / order)
         cosa = np.cos(angle)
         sina = np.sin(angle)
-        rel1 = 0
-        rel2 = 0
-        rel3 = 0
+        rel = np.zeros((1, 3))
         if axis == 0:
             matrix = np.array([[1, 0, 0], [0, cosa, -sina], [0, sina, cosa]])
         elif axis == 1:
@@ -105,37 +98,20 @@ class Molecule:
             matrix = np.array([[cosa, -sina, 0], [sina, cosa, 0], [0, 0, 1]])
         for i in range(self.num_atoms):
             if axis == 0:
-                rel1 = self.atom_coord[i, 0]
-                rel2 = self.atom_coord[i, 1] - c1
-                rel3 = self.atom_coord[i, 2] - c2
+                rel = self.atom_coord[i:i+1] - np.array([0, c1, c2])
             elif axis == 1:
-                rel1 = self.atom_coord[i, 0] - c1
-                rel2 = self.atom_coord[i, 1]
-                rel3 = self.atom_coord[i, 2] - c2
+                rel = self.atom_coord[i:i+1] - np.array([c1, 0, c2])
             elif axis == 2:
-                rel1 = self.atom_coord[i, 0] - c1
-                rel2 = self.atom_coord[i, 1] - c2
-                rel3 = self.atom_coord[i, 2]
-            vector = np.zeros((1, 3))
-            vector[0, 0] = rel1
-            vector[0, 1] = rel2
-            vector[0, 2] = rel3
-            vector = np.matmul(vector, matrix)
+                rel = self.atom_coord[i:i+1] - np.array([c1, c2, 0])
+            v = rel
+            v = np.matmul(v, matrix)
             if axis == 0:
-                rel1 = vector[0, 0]
-                rel2 = vector[0, 1] + c1
-                rel3 = vector[0, 2] + c2
+                rel = v + np.array([0, c1, c2])
             elif axis == 1:
-                rel1 = vector[0, 0] + c1
-                rel2 = vector[0, 1]
-                rel3 = vector[0, 2] + c2
+                rel = v + np.array([c1, 0, c2])
             elif axis == 2:
-                rel1 = vector[0, 0] + c1
-                rel2 = vector[0, 1] + c2
-                rel3 = vector[0, 2]
-            self.atom_coord[i, 0] = rel1
-            self.atom_coord[i, 1] = rel2
-            self.atom_coord[i, 2] = rel3
+                rel = v + np.array([c1, c2, 0])
+            self.atom_coord[i:i+1] = rel
 
     def screw(self, axis, order, step, c1, c2):
         self.rotate(axis, order, c1, c2)
@@ -337,19 +313,19 @@ class CifFile:
                     words[i].strip()
                 if words[0][0] == "_":
                     if words[0] == "_cell_length_a":
-                        self.cell_a = periodic_to_float(words[1], precision)
+                        self.cell_a = periodic_to_float(words[1])
                     if words[0] == "_cell_length_b":
-                        self.cell_b = periodic_to_float(words[1], precision)
+                        self.cell_b = periodic_to_float(words[1])
                     if words[0] == "_cell_length_c":
-                        self.cell_c = periodic_to_float(words[1], precision)
+                        self.cell_c = periodic_to_float(words[1])
                     if words[0] == "_cell_angle_alpha":
-                        self.cell_alpha = periodic_to_float(words[1], precision)
+                        self.cell_alpha = periodic_to_float(words[1])
                     if words[0] == "_cell_angle_beta":
-                        self.cell_beta = periodic_to_float(words[1], precision)
+                        self.cell_beta = periodic_to_float(words[1])
                     if words[0] == "_cell_angle_gamma":
-                        self.cell_gamma = periodic_to_float(words[1], precision)
+                        self.cell_gamma = periodic_to_float(words[1])
                     if words[0] == "_cell_angle_volume":
-                        self.cell_volume = periodic_to_float(words[1], precision)
+                        self.cell_volume = periodic_to_float(words[1])
                     if words[0] == "_space_group_IT_number" and symmetry_detected is False:
                         self.it_number = int(words[1])
                         symmetry_detected = True
