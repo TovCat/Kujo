@@ -143,7 +143,7 @@ class Molecule:
         r = np.zeros((1, 3))
         mass = 0.0
         for i in range(self.num_atoms):
-            r = self.atom_coord[i:i + 1] * nucl_mass[nucl.index(self.atom_label[i])]
+            r = r + self.atom_coord[i:i+1] * nucl_mass[nucl.index(self.atom_label[i])]
             mass = mass + nucl_mass[nucl.index(self.atom_label[i])]
         r = r / mass
         return r
@@ -513,9 +513,7 @@ class Cluster:
         self.mass_centers = np.zeros((len(self.molecules), 3))
         for i in range(len(self.molecules)):
             v = self.molecules[i].mass_center()
-            self.mass_centers[i, 0] = v[0, 0]
-            self.mass_centers[i, 1] = v[1, 0]
-            self.mass_centers[i, 2] = v[2, 0]
+            self.mass_centers[i:i+1] = self.molecules[i].mass_center()
             self.molecules[i].inertia()
         print("   Done: %s" % (time.time() - simp_time))
 
