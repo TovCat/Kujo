@@ -1,13 +1,12 @@
 #   reader_cif.py
-#       simple .cif file reader that extracts all necessary data from the file
-#       +hamiltonian +spectra    
+#       simple .cif file reader that extracts all necessary data from the file and builds molecular cluster
 #   Python 3.8 + math, numpy
 #
 #   Written by Igor Koskin
 #   e-mail: osingran@yandex.ru
 #
 #   last update: 11.03.2020
-#   version: 0.021
+#   version: 0.03
 
 
 import math
@@ -98,11 +97,11 @@ class Molecule:
             matrix = np.array([[cosa, -sina, 0], [sina, cosa, 0], [0, 0, 1]])
         for i in range(self.num_atoms):
             if axis == 0:
-                rel = self.atom_coord[i:i+1] - np.array([0, c1, c2])
+                rel = self.atom_coord[i:i + 1] - np.array([0, c1, c2])
             elif axis == 1:
-                rel = self.atom_coord[i:i+1] - np.array([c1, 0, c2])
+                rel = self.atom_coord[i:i + 1] - np.array([c1, 0, c2])
             elif axis == 2:
-                rel = self.atom_coord[i:i+1] - np.array([c1, c2, 0])
+                rel = self.atom_coord[i:i + 1] - np.array([c1, c2, 0])
             v = rel
             v = np.matmul(v, matrix)
             if axis == 0:
@@ -111,7 +110,7 @@ class Molecule:
                 rel = v + np.array([c1, 0, c2])
             elif axis == 2:
                 rel = v + np.array([c1, c2, 0])
-            self.atom_coord[i:i+1] = rel
+            self.atom_coord[i:i + 1] = rel
 
     def screw(self, axis, order, step, c1, c2):
         self.rotate(axis, order, c1, c2)
@@ -141,50 +140,29 @@ class Molecule:
         self.inverse(x, y, z)
 
     def mass_center(self):
-        sum_x = 0.0
-        sum_y = 0.0
-        sum_z = 0.0
+        r = np.zeros((1, 3))
         mass = 0.0
         for i in range(self.num_atoms):
-            sum_x = sum_x + self.atom_coord[i, 0] * nucl_mass[nucl.index(self.atom_label[i])]
-            sum_y = sum_y + self.atom_coord[i, 1] * nucl_mass[nucl.index(self.atom_label[i])]
-            sum_z = sum_z + self.atom_coord[i, 2] * nucl_mass[nucl.index(self.atom_label[i])]
+            r = self.atom_coord[i:i + 1] * nucl_mass[nucl.index(self.atom_label[i])]
             mass = mass + nucl_mass[nucl.index(self.atom_label[i])]
-        sum_x = sum_x / mass
-        sum_y = sum_y / mass
-        sum_z = sum_z / mass
-        r = np.zeros((3, 1))
-        r[0, 0] = sum_x
-        r[1, 0] = sum_y
-        r[2, 0] = sum_z
+        r = r / mass
         return r
 
     def inertia(self):
-        xx = 0.0
-        yy = 0.0
-        zz = 0.0
-        xy = 0.0
-        yz = 0.0
-        xz = 0.0
         for i in range(self.num_atoms):
-            xx = xx + nucl_mass[nucl.index(self.atom_label[i])] * (self.atom_coord[i, 1] * self.atom_coord[i, 1] +
-                                                                   self.atom_coord[i, 2] * self.atom_coord[i, 2])
-            yy = yy + nucl_mass[nucl.index(self.atom_label[i])] * (self.atom_coord[i, 0] * self.atom_coord[i, 0] +
-                                                                   self.atom_coord[i, 2] * self.atom_coord[i, 2])
-            zz = zz + nucl_mass[nucl.index(self.atom_label[i])] * (self.atom_coord[i, 0] * self.atom_coord[i, 0] +
-                                                                   self.atom_coord[i, 1] * self.atom_coord[i, 1])
-            xy = xy + nucl_mass[nucl.index(self.atom_label[i])] * self.atom_coord[i, 0] * self.atom_coord[i, 1]
-            yz = yz + nucl_mass[nucl.index(self.atom_label[i])] * self.atom_coord[i, 1] * self.atom_coord[i, 2]
-            xz = xz + nucl_mass[nucl.index(self.atom_label[i])] * self.atom_coord[i, 0] * self.atom_coord[i, 2]
-        self.inertia_tensor[0, 0] = xx
-        self.inertia_tensor[0, 1] = xy
-        self.inertia_tensor[0, 2] = xz
-        self.inertia_tensor[1, 0] = xy
-        self.inertia_tensor[1, 1] = yy
-        self.inertia_tensor[1, 2] = yz
-        self.inertia_tensor[2, 0] = xz
-        self.inertia_tensor[2, 1] = yz
-        self.inertia_tensor[2, 2] = zz
+            mass = nucl_mass[nucl.index(self.atom_label[i])]
+            self.inertia_tensor[0, 0] = self.inertia_tensor[0, 0] + \
+                                        mass * (self.atom_coord[i, 1] ** 2 + self.atom_coord[i, 2] ** 2)
+            self.inertia_tensor[1, 1] = self.inertia_tensor[1, 1] + \
+                                        mass * (self.atom_coord[i, 0] ** 2 + self.atom_coord[i, 2] ** 2)
+            self.inertia_tensor[2, 2] = self.inertia_tensor[2, 2] + \
+                                        mass * (self.atom_coord[i, 0] ** 2 + self.atom_coord[i, 1] ** 2)
+            self.inertia_tensor[0, 1] = self.inertia_tensor[0, 1] + mass * self.atom_coord[i, 0] * self.atom_coord[i, 1]
+            self.inertia_tensor[1, 0] = self.inertia_tensor[0, 1]
+            self.inertia_tensor[1, 2] = self.inertia_tensor[1, 2] + mass * self.atom_coord[i, 1] * self.atom_coord[i, 2]
+            self.inertia_tensor[2, 1] = self.inertia_tensor[1, 2]
+            self.inertia_tensor[0, 2] = self.inertia_tensor[0, 2] + mass * self.atom_coord[i, 0] * self.atom_coord[i, 2]
+            self.inertia_tensor[2, 0] = self.inertia_tensor[0, 2]
         self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
         self.inertia_eig_val = self.inertia_eig_val / self.inertia_eig_val.max()
         for n in range(3):
@@ -195,16 +173,13 @@ class Molecule:
 def copy_molecule(m1, m2: Molecule):
     for n in range(m1.num_atoms):
         m2.atom_label.append(m1.atom_label[n])
-        m2.atom_coord[n, 0] = m1.atom_coord[n, 0]
-        m2.atom_coord[n, 1] = m1.atom_coord[n, 1]
-        m2.atom_coord[n, 2] = m1.atom_coord[n, 2]
+        m2.atom_coord[n:n + 1] = m1.atom_coord[n:n + 1]
 
 
 def molecule_coincide(m1, m2: Molecule):
     diff = 0.0
     for i in range(m1.num_atoms):
-        diff = (m1.atom_coord[i, 0] - m2.atom_coord[i, 0]) ** 2 + (m1.atom_coord[i, 1] - m2.atom_coord[i, 1]) ** 2 + \
-               (m1.atom_coord[i, 2] - m2.atom_coord[i, 2]) ** 2
+        diff = np.linalg.norm(m1.atom_coord[i:i+1] - m2.atom_coord[i:i+1])
     if diff < 0.01:
         return True
     else:
