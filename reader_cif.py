@@ -364,6 +364,18 @@ class CifFile:
         self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
         self.transform[2, 2] = self.cell_c * volume / sing
         self.rev_transform = np.linalg.inv(self.transform)
+        self.a_trans_cart = np.zeros((3, 1))
+        self.b_trans_cart = np.zeros((3, 1))
+        self.c_trans_cart = np.zeros((3, 1))
+        self.a_trans_cart[0, 0] = 1.0
+        self.b_trans_cart[1, 0] = 1.0
+        self.c_trans_cart[2, 0] = 1.0
+        self.a_trans_cart = np.matmul(self.transform, self.a_trans_cart)
+        self.b_trans_cart = np.matmul(self.transform, self.b_trans_cart)
+        self.c_trans_cart = np.matmul(self.transform, self.c_trans_cart)
+        self.a_trans_cart = np.transpose(self.a_trans_cart)
+        self.b_trans_cart = np.transpose(self.b_trans_cart)
+        self.c_trans_cart = np.transpose(self.c_trans_cart)
         print("   Done: %s" % (time.time() - cif_time))
 
 
