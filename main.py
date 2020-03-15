@@ -12,5 +12,6 @@ mu[0, 0] = 5.09777
 mu[0, 1] = 0.07312
 mu[0, 2] = 0.04931
 H = np.zeros((len(cl.molecules), len(cl.molecules)))
-e.hamiltonian_dipole(cl, mu, H)
-e.spectra(cl, mu, H)
+d = 16.2516 # 8.6 angstrom
+e.hamiltonian_extended_dipole(cl, d, mu, H)
+e.spectra(cl, mu, H, 1000, 2000)

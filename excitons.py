@@ -31,8 +31,7 @@ def hamiltonian_dipole(c: rc.Cluster, mu, H):
     print("   Done: %s" % (time.time() - h_time))
 
 
-def hamiltonian_extended_dipole(c: rc.Cluster, mu, H):
-    d = 16.2516726  # 8.6 angstrom
+def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
     q = np.linalg.norm(mu) / (2 * d)
     mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
     A = 219500  # Hartree to cm-1
@@ -54,15 +53,15 @@ def hamiltonian_extended_dipole(c: rc.Cluster, mu, H):
             H[m, n] = H[n, m]
 
 
-def spectra(clust: rc.Cluster, mu, H):
+def spectra(clust: rc.Cluster, mu, H, bins, sigma):
+    plt.xlabel('Energy (cm-1)')
+    plt.ylabel('Intensity')
     mu_a = np.zeros((len(clust.molecules), 3))
     for x in range(len(clust.molecules)):
         mu_a[x, 0] = mu[0, 0]
         mu_a[x, 1] = mu[0, 1]
         mu_a[x, 2] = mu[0, 2]
     E, c = np.linalg.eig(H)
-    bins = 1000
-    sigma = 100000
     EminA = np.min(E)
     EmaxA = np.max(E)
     print(EmaxA)
