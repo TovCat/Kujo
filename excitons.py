@@ -2,40 +2,59 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import reader_cif as rc
+import math
 
-def hamiltonian(c: rc.Cluster):
-    print("Calculate Hamiltinian")
+
+def hamiltonian_dipole(c: rc.Cluster, mu, H):
+    print("Calculate Hamiltonian")
     h_time = time.time()
-    global mu
-    mu = np.zeros((1, 3))
-    mu[0, 0] = 5.09777
-    mu[0, 1] = 0.07312
-    mu[0, 2] = 0.04931
     A = 219500  # Hartree to cm-1
     bohr3 = 0.529177210  # bohr in Å
-    global H
-    H = np.zeros((len(c.molecules), len(c.molecules)))
-    for n1 in range(len(c.molecules)):
-        for m1 in range(n1 + 1, len(c.molecules)):
-            v1_o = np.zeros((1, 3))
-            v2_o = np.zeros((1, 3))
-            v1_o[0, 0] = c.mass_centers[n1, 0]
-            v1_o[0, 1] = c.mass_centers[n1, 1]
-            v1_o[0, 2] = c.mass_centers[n1, 2]
-            v2_o[0, 0] = c.mass_centers[m1, 0]
-            v2_o[0, 1] = c.mass_centers[m1, 1]
-            v2_o[0, 2] = c.mass_centers[m1, 2]
-            dv1 = v1_o - v2_o
-            r1 = np.linalg.norm(dv1)
+    for n in range(len(c.molecules)):
+        for m in range(n + 1, len(c.molecules)):
+            v1 = np.zeros((1, 3))
+            v2 = np.zeros((1, 3))
+            v1[0, 0] = c.mass_centers[n, 0]
+            v1[0, 1] = c.mass_centers[n, 1]
+            v1[0, 2] = c.mass_centers[n, 2]
+            v2[0, 0] = c.mass_centers[m, 0]
+            v2[0, 1] = c.mass_centers[m, 1]
+            v2[0, 2] = c.mass_centers[m, 2]
+            dv = v1 - v2
+            r1 = np.linalg.norm(dv)
             r1 = r1 / bohr3
             r3 = r1 * r1 * r1
             r5 = r3 * r1 * r1
-            J = np.inner(mu, mu) / r3 + (np.inner(mu, dv1) * np.inner(dv1, mu)) / r5
-            H[n1, m1] = J * A
-            H[m1, n1] = H[n1, m1]
+            J = np.inner(mu, mu) / r3 + (np.inner(mu, dv) * np.inner(dv, mu)) / r5
+            H[n, m] = J * A
+            H[m, n] = H[n, m]
     print("   Done: %s" % (time.time() - h_time))
 
-def spectra(clust: rc.Cluster):
+
+def hamiltonian_extended_dipole(c: rc.Cluster, mu, H):
+    d = 16.2516726  # 8.6 angstrom
+    q = np.linalg.norm(mu) / (2 * d)
+    mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
+    A = 219500  # Hartree to cm-1
+    bohr3 = 0.529177210  # bohr in Å
+    for n in range(len(c.molecules)):
+        for m in range(n + 1, len(c.molecules)):
+            mass_center_bohr1 = c.mass_centers[n:n + 1] / bohr3
+            mass_center_bohr2 = c.mass_centers[m:m + 1] / bohr3
+            p1_1 = mass_center_bohr1 + mu_trans
+            p1_2 = mass_center_bohr1 - mu_trans
+            p2_1 = mass_center_bohr2 + mu_trans
+            p2_2 = mass_center_bohr2 - mu_trans
+            r_pp = np.linalg.norm(p1_1 - p2_1)
+            r_pm = np.linalg.norm(p1_1 - p2_2)
+            r_mp = np.linalg.norm(p1_2 - p2_1)
+            r_mm = np.linalg.norm(p1_2 - p2_2)
+            J = (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm))
+            H[n, m] = J * A
+            H[m, n] = H[n, m]
+
+
+def spectra(clust: rc.Cluster, mu, H):
     mu_a = np.zeros((len(clust.molecules), 3))
     for x in range(len(clust.molecules)):
         mu_a[x, 0] = mu[0, 0]
