@@ -541,6 +541,22 @@ class Cluster:
                 self.pre_molecules[i1].atom_coord[i, 1] = vector[1, 0]
                 self.pre_molecules[i1].atom_coord[i, 2] = vector[2, 0]
 
+    def multiply(self):
+        new1 = self.mass_centers[8:9] + self.cif.c_trans_cart
+        new2 = self.mass_centers[8:9] - self.cif.c_trans_cart
+        new3 = self.mass_centers[9:10] + self.cif.c_trans_cart
+        new4 = self.mass_centers[9:10] - self.cif.c_trans_cart
+        new_mc = np.zeros((14, 3))
+        for n in range(10):
+            new_mc[n:n+1] = self.mass_centers[n:n+1]
+        new_mc[10:11] = new1
+        new_mc[11:12] = new2
+        new_mc[12:13] = new3
+        new_mc[13:14] = new4
+        self.mass_centers = np.zeros((14, 3))
+        self.mass_centers = new_mc
+        np.set_printoptions(precision=4, suppress=True)
+
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
         self.cif = CifFile(path)
@@ -549,3 +565,4 @@ class Cluster:
         self.to_cartesian()
         self.rebuild()
         self.simplify()
+        self.multiply()

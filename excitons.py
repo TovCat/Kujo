@@ -36,8 +36,8 @@ def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
     mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
     A = 219500  # Hartree to cm-1
     bohr3 = 0.529177210  # bohr in Å
-    for n in range(len(c.molecules)):
-        for m in range(n + 1, len(c.molecules)):
+    for n in range(len(c.mass_centers)):
+        for m in range(n + 1, len(c.mass_centers)):
             mass_center_bohr1 = c.mass_centers[n:n + 1] / bohr3
             mass_center_bohr2 = c.mass_centers[m:m + 1] / bohr3
             p1_1 = mass_center_bohr1 + mu_trans
@@ -56,8 +56,8 @@ def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
 def spectra(clust: rc.Cluster, mu, H, bins, sigma):
     plt.xlabel('Energy (cm-1)')
     plt.ylabel('Intensity')
-    mu_a = np.zeros((len(clust.molecules), 3))
-    for x in range(len(clust.molecules)):
+    mu_a = np.zeros((len(clust.mass_centers), 3))
+    for x in range(len(clust.mass_centers)):
         mu_a[x, 0] = mu[0, 0]
         mu_a[x, 1] = mu[0, 1]
         mu_a[x, 2] = mu[0, 2]
@@ -70,7 +70,7 @@ def spectra(clust: rc.Cluster, mu, H, bins, sigma):
     dE = (Emax - Emin) / bins
     Ex = np.linspace(Emin, Emax, bins)
     Ey = np.zeros(bins)
-    for n1 in range(len(clust.molecules)):
+    for n1 in range(len(clust.mass_centers)):
         bin = int(round((E[n1] - Emin) / dE))
         Emu = np.zeros(3)
         Emu[0] = np.inner(c[:, n1], mu_a[:, 0])
