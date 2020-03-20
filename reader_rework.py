@@ -53,6 +53,9 @@ class Molecule:
         self.atom_label = []
         self.atom_coord = np.zeros((n, 3))
         self.threshold = 0.1
+        self.inertia_tensor = np.zeros((3, 3))
+        self.inertia_eig_val = np.zeros((3, 1))
+        self.inertia_eig_vec = np.zeros((3, 3))
 
     def inside(self):
         a1 = 1 + self.threshold
@@ -72,10 +75,36 @@ class Molecule:
         r = np.zeros((1, 3))
         mass = 0.0
         for i in range(self.num_atoms):
-            r = r + self.atom_coord[i:i+1] * dict.element_weight[self.atom_label[i]]
+            r = r + self.atom_coord[i:i + 1] * dict.element_weight[self.atom_label[i]]
             mass = mass + dict.element_weight[self.atom_label[i]]
         r = r / mass
         return r
+
+    def inertia(self):
+        mass_vector = self.mass_center()
+        self.internal_coord = self.atom_coord - mass_vector
+        for i in range(self.num_atoms):
+            mass = dict.element_weight[self.atom_label[i]]
+            self.inertia_tensor[0, 0] = self.inertia_tensor[0, 0] + \
+                                        mass * (self.internal_coord[i, 1] ** 2 + self.internal_coord[i, 2] ** 2)
+            self.inertia_tensor[1, 1] = self.inertia_tensor[1, 1] + \
+                                        mass * (self.internal_coord[i, 0] ** 2 + self.internal_coord[i, 2] ** 2)
+            self.inertia_tensor[2, 2] = self.inertia_tensor[2, 2] + \
+                                        mass * (self.internal_coord[i, 0] ** 2 + self.internal_coord[i, 1] ** 2)
+            self.inertia_tensor[0, 1] = self.inertia_tensor[0, 1] + \
+                                        mass * self.internal_coord[i, 0] * self.internal_coord[i, 1]
+            self.inertia_tensor[1, 0] = self.inertia_tensor[0, 1]
+            self.inertia_tensor[1, 2] = self.inertia_tensor[1, 2] + \
+                                        mass * self.internal_coord[i, 1] * self.internal_coord[i, 2]
+            self.inertia_tensor[2, 1] = self.inertia_tensor[1, 2]
+            self.inertia_tensor[0, 2] = self.inertia_tensor[0, 2] + \
+                                        mass * self.internal_coord[i, 0] * self.internal_coord[i, 2]
+            self.inertia_tensor[2, 0] = self.inertia_tensor[0, 2]
+        self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
+        self.inertia_eig_val = self.inertia_eig_val / self.inertia_eig_val.max()
+        for n in range(3):
+            for m in range(3):
+                self.inertia_eig_vec[n, m] = self.inertia_eig_vec[n, m] * self.inertia_eig_val[n]
 
 
 def copy_molecule(m1, m2: Molecule):
@@ -87,7 +116,7 @@ def copy_molecule(m1, m2: Molecule):
 def molecule_coincide(m1, m2: Molecule):
     diff = 0.0
     for i in range(m1.num_atoms):
-        diff = np.linalg.norm(m1.atom_coord[i:i+1] - m2.atom_coord[i:i+1])
+        diff = np.linalg.norm(m1.atom_coord[i:i + 1] - m2.atom_coord[i:i + 1])
     if diff < 0.01:
         return True
     else:
