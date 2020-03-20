@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import dictionaries as dict
 
 
 def periodic_to_float(number, count=1):
@@ -19,6 +20,30 @@ def periodic_to_float(number, count=1):
 def transform(m: np.array, trans: np.array):
     for i in range(m.shape[0]):
         m[i:i + 1] = np.matmul(m[i:i + 1], trans)
+
+
+def parse_eq_xyz(eq: list):
+    l = eq
+    mult = np.zeros((3, 1))
+    add = np.zeros((3, 1))
+    for i in range(len(l)):
+        if l[i][0] == "-":
+            mult[i, 0] = -1
+            l[i] = l[i][2:]
+        else:
+            mult[i, 0] = 1
+            l[i] = l[i][1:]
+    for i in range(len(l)):
+        if l[i][0] == "+":
+            l[i] = l[i][1:]
+            w = l[i].split("/")
+            number = int(w[0]) / int(w[1])
+            add[i, 0] = number
+        elif l[i][0] == "-":
+            l[i] = l[i][1:]
+            w = l[i].split("/")
+            number = int(w[0]) / int(w[1])
+            add[i, 0] = -1 * number
 
 
 class Molecule:
