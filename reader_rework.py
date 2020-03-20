@@ -265,10 +265,42 @@ class Cluster:
                     self.bonds[n, k] = 1
                     self.bonds[k, n] = 1
 
+    def simplify(self):
+        self.mass_centers = np.zeros((len(self.molecules), 3))
+        for i in range(len(self.molecules)):
+            v = self.molecules[i].mass_center()
+            self.mass_centers[i:i+1] = self.molecules[i].mass_center()
+            self.molecules[i].inertia()
+
+    def multiply(self, a: int, b: int, c: int):
+        self.mass_centers = np.zeros((len(self.molecules), 3))
+        for i in range(len(self.molecules)):
+            v = self.molecules[i].mass_center()
+            self.mass_centers[i:i+1] = self.molecules[i].mass_center()
+        mass_centers_fract = np.zeros((len(self.molecules), 3))
+        for i in range(len(self.molecules)):
+            mass_centers_fract[i:i+1] = np.matmul(self.cif.rev_transform, self.mass_centers[i:i+1])
+        for i in range(len(self.molecules)):
+            for x in range(a + 1):
+                for y in range(b + 1):
+                    for z in range(c + 1):
+                        point = mass_centers_fract[i:i+1] + np.array([x, y, z])
+                        if (0.0 <= point[0, 0] <= a) and (0.0 <= point[1, 0] <= b) and (0.0 <= point[2, 0] <= c):
+                            new_molecule = Molecule(self.molecules[i].num_atoms)
+                            copy_molecule(self.molecules[i], new_molecule)
+                            new_molecule.atom_coord = new_molecule.atom_coord + np.array([x, y, z])
+                            coincide = False
+                            for i2 in range(len(self.molecules)):
+                                if molecule_coincide(self.molecules[i2], new_molecule):
+                                    coincide = True
+                            if not coincide:
+                                self.molecules.append(new_molecule)
+
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
         self.cif = CifFile(path)
         self.pre_molecules.append(self.cif.asym_unit)
+        self.molecules = []
 
 
 c = CifFile("D:\[work]\Kujo\KES48.cif")
