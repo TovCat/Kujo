@@ -247,6 +247,24 @@ class Cluster:
                         if new_molecule.inside() and not coincide:
                             self.pre_molecules.append(new_molecule)
 
+    def connectivity(self):
+        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+                          self.pre_molecules[0].num_atoms))
+        for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                m1 = n // self.pre_molecules[0].num_atoms
+                m1n = n % self.pre_molecules[0].num_atoms
+                m2 = k // self.pre_molecules[0].num_atoms
+                m2n = k % self.pre_molecules[0].num_atoms
+                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n+1]
+                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n+1]
+                dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
+                limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                             dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+                if dist <= limit_dist:
+                    self.bonds[n, k] = 1
+                    self.bonds[k, n] = 1
+
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
         self.cif = CifFile(path)
