@@ -52,6 +52,46 @@ class Molecule:
         self.num_atoms = n
         self.atom_label = []
         self.atom_coord = np.zeros((n, 3))
+        self.threshold = 0.1
+
+    def inside(self):
+        a1 = 1 + self.threshold
+        a2 = 0 - self.threshold
+        r = False
+        for n in range(self.num_atoms):
+            if (self.atom_coord[n, 0] <= a1) and (self.atom_coord[n, 1] <= a1) and \
+                    (self.atom_coord[n, 2] <= a1) and (self.atom_coord[n, 0] >= a2) and \
+                    (self.atom_coord[n, 1] >= a2) and (self.atom_coord[n, 2] >= a2):
+                r = True
+                break
+            else:
+                r = False
+        return r
+
+    def mass_center(self):
+        r = np.zeros((1, 3))
+        mass = 0.0
+        for i in range(self.num_atoms):
+            r = r + self.atom_coord[i:i+1] * dict.element_weight[self.atom_label[i]]
+            mass = mass + dict.element_weight[self.atom_label[i]]
+        r = r / mass
+        return r
+
+
+def copy_molecule(m1, m2: Molecule):
+    for n in range(m1.num_atoms):
+        m2.atom_label.append(m1.atom_label[n])
+        m2.atom_coord[n:n + 1] = m1.atom_coord[n:n + 1]
+
+
+def molecule_coincide(m1, m2: Molecule):
+    diff = 0.0
+    for i in range(m1.num_atoms):
+        diff = np.linalg.norm(m1.atom_coord[i:i+1] - m2.atom_coord[i:i+1])
+    if diff < 0.01:
+        return True
+    else:
+        return False
 
 
 class CifFile:
