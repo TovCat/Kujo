@@ -44,6 +44,7 @@ def parse_eq_xyz(eq: list):
             w = l[i].split("/")
             number = int(w[0]) / int(w[1])
             add[i, 0] = -1 * number
+    return mult, add
 
 
 class Molecule:
@@ -214,6 +215,42 @@ class CifFile:
             self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
             self.transform[2, 2] = self.cell_c * volume / sing
             self.rev_transform = np.linalg.inv(self.transform)
+            # extract xyz eq positions
+            if data["_symmetry_space_group_name_Hall"] != "":
+                self.xyz = dict.SymOpsHall[data["_symmetry_space_group_name_Hall"]]
+            elif data["_symmetry_space_group_name_H-M"] != "":
+                self.xyz = dict.SymOpsHall[dict.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
+            else:
+                print("No symmetry detected in CIF file!")
+                exit(-1)
+
+
+class Cluster:
+
+    def build(self):
+        for i1 in range(len(self.cif.xyz)):
+            mult, add = parse_eq_xyz(self.cif.xyz[i1])
+            for a in range(-2, 3):
+                for b in range(-2, 3):
+                    for c in range(-2, 3):
+                        new_molecule = Molecule(self.cif.asym_unit.num_atoms)
+                        copy_molecule(self.cif.asym_unit, new_molecule)
+                        new_molecule.atom_coord = new_molecule.atom_coord * mult
+                        new_molecule.atom_coord = new_molecule.atom_coord + add
+                        new_molecule.atom_coord = new_molecule.atom_coord + a * np.array([1, 0, 0])
+                        new_molecule.atom_coord = new_molecule.atom_coord + b * np.array([0, 1, 0])
+                        new_molecule.atom_coord = new_molecule.atom_coord + c * np.array([0, 0, 1])
+                        coincide = False
+                        for i2 in range(len(self.pre_molecules)):
+                            if molecule_coincide(self.pre_molecules[i2], new_molecule):
+                                coincide = True
+                        if new_molecule.inside() and not coincide:
+                            self.pre_molecules.append(new_molecule)
+
+    def __init__(self, a: int, b: int, c: int, path: str):
+        self.pre_molecules = []
+        self.cif = CifFile(path)
+        self.pre_molecules.append(self.cif.asym_unit)
 
 
 c = CifFile("D:\[work]\Kujo\KES48.cif")
