@@ -299,6 +299,7 @@ class Cluster:
     def rebuild(self):
         checked = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, 1))
         mol = []
+        flag = False
         while not flag:
             for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
                 if checked[i, 0] == 0:
