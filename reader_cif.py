@@ -12,6 +12,7 @@
 import math
 import numpy as np
 import time
+import dictionaries as dict
 
 nucl = ["H", "C", "O"]
 nucl_mass = [1, 12, 16]
@@ -143,25 +144,30 @@ class Molecule:
         r = np.zeros((1, 3))
         mass = 0.0
         for i in range(self.num_atoms):
-            r = r + self.atom_coord[i:i+1] * nucl_mass[nucl.index(self.atom_label[i])]
-            mass = mass + nucl_mass[nucl.index(self.atom_label[i])]
+            r = r + self.atom_coord[i:i + 1] * dict.element_weight[self.atom_label[i]]
+            mass = mass + dict.element_weight[self.atom_label[i]]
         r = r / mass
         return r
 
     def inertia(self):
+        mass_vector = self.mass_center()
+        self.internal_coord = self.atom_coord - mass_vector
         for i in range(self.num_atoms):
-            mass = nucl_mass[nucl.index(self.atom_label[i])]
+            mass = dict.element_weight[self.atom_label[i]]
             self.inertia_tensor[0, 0] = self.inertia_tensor[0, 0] + \
-                                        mass * (self.atom_coord[i, 1] ** 2 + self.atom_coord[i, 2] ** 2)
+                                        mass * (self.internal_coord[i, 1] ** 2 + self.internal_coord[i, 2] ** 2)
             self.inertia_tensor[1, 1] = self.inertia_tensor[1, 1] + \
-                                        mass * (self.atom_coord[i, 0] ** 2 + self.atom_coord[i, 2] ** 2)
+                                        mass * (self.internal_coord[i, 0] ** 2 + self.internal_coord[i, 2] ** 2)
             self.inertia_tensor[2, 2] = self.inertia_tensor[2, 2] + \
-                                        mass * (self.atom_coord[i, 0] ** 2 + self.atom_coord[i, 1] ** 2)
-            self.inertia_tensor[0, 1] = self.inertia_tensor[0, 1] + mass * self.atom_coord[i, 0] * self.atom_coord[i, 1]
+                                        mass * (self.internal_coord[i, 0] ** 2 + self.internal_coord[i, 1] ** 2)
+            self.inertia_tensor[0, 1] = self.inertia_tensor[0, 1] + \
+                                        mass * self.internal_coord[i, 0] * self.internal_coord[i, 1]
             self.inertia_tensor[1, 0] = self.inertia_tensor[0, 1]
-            self.inertia_tensor[1, 2] = self.inertia_tensor[1, 2] + mass * self.atom_coord[i, 1] * self.atom_coord[i, 2]
+            self.inertia_tensor[1, 2] = self.inertia_tensor[1, 2] + \
+                                        mass * self.internal_coord[i, 1] * self.internal_coord[i, 2]
             self.inertia_tensor[2, 1] = self.inertia_tensor[1, 2]
-            self.inertia_tensor[0, 2] = self.inertia_tensor[0, 2] + mass * self.atom_coord[i, 0] * self.atom_coord[i, 2]
+            self.inertia_tensor[0, 2] = self.inertia_tensor[0, 2] + \
+                                        mass * self.internal_coord[i, 0] * self.internal_coord[i, 2]
             self.inertia_tensor[2, 0] = self.inertia_tensor[0, 2]
         self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
         self.inertia_eig_val = self.inertia_eig_val / self.inertia_eig_val.max()
@@ -441,7 +447,7 @@ class Cluster:
     def rebuild(self):
         print("Build connectivity matrix")
         connectivity_time = time.time()
-        bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                           self.pre_molecules[0].num_atoms))
         for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
             for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
@@ -449,31 +455,14 @@ class Cluster:
                 m1n = n % self.pre_molecules[0].num_atoms
                 m2 = k // self.pre_molecules[0].num_atoms
                 m2n = k % self.pre_molecules[0].num_atoms
-                v1 = np.zeros((3, 1))
-                v2 = np.zeros((3, 1))
-                v1[0, 0] = self.pre_molecules[m1].atom_coord[m1n, 0]
-                v1[1, 0] = self.pre_molecules[m1].atom_coord[m1n, 1]
-                v1[2, 0] = self.pre_molecules[m1].atom_coord[m1n, 2]
-                v2[0, 0] = self.pre_molecules[m2].atom_coord[m2n, 0]
-                v2[1, 0] = self.pre_molecules[m2].atom_coord[m2n, 1]
-                v2[2, 0] = self.pre_molecules[m2].atom_coord[m2n, 2]
-                dv = v1 - v2
-                dist = np.linalg.norm(dv)
-                if self.pre_molecules[m1].atom_label[m1n] == "C" and self.pre_molecules[m2].atom_label[m2n] == "C":
-                    limit = 1.5
-                elif self.pre_molecules[m1].atom_label[m1n] == "C" and self.pre_molecules[m2].atom_label[m2n] == "H":
-                    limit = 1.0
-                elif self.pre_molecules[m1].atom_label[m1n] == "H" and self.pre_molecules[m2].atom_label[m2n] == "C":
-                    limit = 1.0
-                elif self.pre_molecules[m1].atom_label[m1n] == "C" and self.pre_molecules[m2].atom_label[m2n] == "O":
-                    limit = 1.4
-                elif self.pre_molecules[m1].atom_label[m1n] == "O" and self.pre_molecules[m2].atom_label[m2n] == "C":
-                    limit = 1.4
-                else:
-                    pass
-                if dist <= limit:
-                    bonds[n, k] = 1
-                    bonds[k, n] = 1
+                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n+1]
+                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n+1]
+                dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
+                limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                             dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+                if dist <= limit_dist:
+                    self.bonds[n, k] = 1
+                    self.bonds[k, n] = 1
         print("   Done: %s" % (time.time() - connectivity_time))
         print("Finalize cluster")
         f_cluster_time = time.time()
