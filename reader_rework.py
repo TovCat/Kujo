@@ -34,12 +34,12 @@ def parse_eq_xyz(eq: list):
             mult[i, 0] = 1
             l[i] = l[i][1:]
     for i in range(len(l)):
-        if l[i][0] == "+":
+        if l[i] != "" and [i][0] == "+":
             l[i] = l[i][1:]
             w = l[i].split("/")
             number = int(w[0]) / int(w[1])
             add[i, 0] = number
-        elif l[i][0] == "-":
+        elif l[i] != "" and l[i][0] == "-":
             l[i] = l[i][1:]
             w = l[i].split("/")
             number = int(w[0]) / int(w[1])
@@ -340,6 +340,6 @@ class Cluster:
         self.cif = CifFile(path)
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
+        self.build()
 
-
-c = CifFile("D:\[work]\Kujo\KES48.cif")
+cl = Cluster(0, 0, 0, "D:\[work]\Kujo\KES48.cif")
