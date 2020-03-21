@@ -24,26 +24,26 @@ def transform(m: np.array, trans: np.array):
 
 def parse_eq_xyz(eq: list):
     l = eq
-    mult = np.zeros((3, 1))
-    add = np.zeros((3, 1))
+    mult = np.zeros((1, 3))
+    add = np.zeros((1, 3))
     for i in range(len(l)):
         if l[i][0] == "-":
-            mult[i, 0] = -1
+            mult[0, i] = -1
             l[i] = l[i][2:]
         else:
-            mult[i, 0] = 1
+            mult[0, i] = 1
             l[i] = l[i][1:]
     for i in range(len(l)):
         if l[i] != "" and [i][0] == "+":
             l[i] = l[i][1:]
             w = l[i].split("/")
             number = int(w[0]) / int(w[1])
-            add[i, 0] = number
+            add[0, i] = number
         elif l[i] != "" and l[i][0] == "-":
             l[i] = l[i][1:]
             w = l[i].split("/")
             number = int(w[0]) / int(w[1])
-            add[i, 0] = -1 * number
+            add[0, i] = -1 * number
     return mult, add
 
 
