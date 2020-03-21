@@ -136,6 +136,7 @@ class CifFile:
         contents = file.readlines()
         file.close()
         # init cif dictionary
+        self.xyz = []
         data = {
             "_cell_length_a": "",
             "_cell_length_b": "",
@@ -161,13 +162,15 @@ class CifFile:
         # read the asymmetric unit
         for x in data["loop_"]:
             index_loop = x + 1
-            s = contents[index_loop]
+            s = contents[index_loop].strip()
             loop_list = []
             while s != "" and s != "loop_":
                 loop_list.append(s)
                 index_loop = index_loop + 1
-                s = contents[index_loop]
-                s = s.strip()
+                s = contents[index_loop].strip()
+            if loop_list[0] == "_symmetry_equiv_pos_as_xyz":
+                for i in range(1, len(loop_list)):
+                    self.xyz.append(loop_list[i].replace("'", "").split(", "))
             positions = {
                 "_atom_site_type_symbol": 0,
                 "_atom_site_fract_x": 0,
@@ -200,25 +203,28 @@ class CifFile:
             self.cell_alpha = periodic_to_float(data["_cell_angle_alpha"])
             self.cell_beta = periodic_to_float(data["_cell_angle_beta"])
             self.cell_gamma = periodic_to_float(data["_cell_angle_gamma"])
-            # generate transformation matrices
-            cosa = np.cos(np.deg2rad(self.cell_alpha))
-            cosb = np.cos(np.deg2rad(self.cell_beta))
-            cosg = np.cos(np.deg2rad(self.cell_gamma))
-            sing = np.sin(np.deg2rad(self.cell_gamma))
-            volume = 1.0 - cosa ** 2.0 - cosb ** 2.0 - cosg ** 2.0 + 2.0 * cosa * cosb * cosg
-            volume = np.sqrt(volume)
-            self.transform = np.zeros((3, 3))
-            self.transform[0, 0] = self.cell_a
-            self.transform[0, 1] = self.cell_b * cosg
-            self.transform[0, 2] = self.cell_c * cosb
-            self.transform[1, 1] = self.cell_b * sing
-            self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
-            self.transform[2, 2] = self.cell_c * volume / sing
-            self.rev_transform = np.linalg.inv(self.transform)
-            # extract xyz eq positions
+        # generate transformation matrices
+        cosa = np.cos(np.deg2rad(self.cell_alpha))
+        cosb = np.cos(np.deg2rad(self.cell_beta))
+        cosg = np.cos(np.deg2rad(self.cell_gamma))
+        sing = np.sin(np.deg2rad(self.cell_gamma))
+        volume = 1.0 - cosa ** 2.0 - cosb ** 2.0 - cosg ** 2.0 + 2.0 * cosa * cosb * cosg
+        volume = np.sqrt(volume)
+        self.transform = np.zeros((3, 3))
+        self.transform[0, 0] = self.cell_a
+        self.transform[0, 1] = self.cell_b * cosg
+        self.transform[0, 2] = self.cell_c * cosb
+        self.transform[1, 1] = self.cell_b * sing
+        self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
+        self.transform[2, 2] = self.cell_c * volume / sing
+        self.rev_transform = np.linalg.inv(self.transform)
+        # extract xyz eq positions if they're not yet extracted
+        if len(self.xyz) == 0:
             if data["_symmetry_space_group_name_Hall"] != "":
                 self.xyz = dict.SymOpsHall[data["_symmetry_space_group_name_Hall"]]
             elif data["_symmetry_space_group_name_H-M"] != "":
+                data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace("(", "")
+                data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace(")", "")
                 self.xyz = dict.SymOpsHall[dict.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
             else:
                 print("No symmetry detected in CIF file!")
