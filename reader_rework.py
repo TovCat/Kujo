@@ -296,6 +296,38 @@ class Cluster:
                             if not coincide:
                                 self.molecules.append(new_molecule)
 
+    def rebuild(self):
+        checked = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, 1))
+        mol = []
+        while not flag:
+            for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                if checked[i, 0] == 0:
+                    mol.append(i)
+                    checked[i, 0] = 1
+                    break
+            inner_flag = False
+            while not inner_flag:
+                old_len = len(mol)
+                for i1 in range(len(mol)):
+                    for i2 in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                        if self.bonds[i1, i2] == 1:
+                            mol.append(i2)
+                            checked[i2, 0] = 1
+                if old_len == len(mol):
+                    inner_flag = True
+            flag = True
+            for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                if checked[i, 0] != 1:
+                    flag = False
+            new_molecule = Molecule(len(mol))
+            for i in range(len(mol)):
+                m = mol[i] // self.pre_molecules[0].num_atoms
+                n = mol[i] % self.pre_molecules[0].num_atoms
+                new_molecule.atom_label[i] = self.pre_molecules[m].atom_label[n]
+                new_molecule.atom_coord[i:i+1] = self.pre_molecules[m].atom_coord[n:n+1]
+            self.molecules.append(new_molecule)
+            mol.clear()
+
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
         self.cif = CifFile(path)
