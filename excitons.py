@@ -4,12 +4,12 @@ import time
 import reader_cif as rc
 import math
 
+A = 219500  # Hartree to cm-1
+bohr3 = 0.529177210  # bohr in Å
 
 def hamiltonian_dipole(c: rc.Cluster, mu, H):
     print("Calculate Hamiltonian")
     h_time = time.time()
-    A = 219500  # Hartree to cm-1
-    bohr3 = 0.529177210  # bohr in Å
     for n in range(len(c.molecules)):
         for m in range(n + 1, len(c.molecules)):
             v1 = np.zeros((1, 3))
@@ -34,8 +34,6 @@ def hamiltonian_dipole(c: rc.Cluster, mu, H):
 def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
     q = np.linalg.norm(mu) / (2 * d)
     mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
-    A = 219500  # Hartree to cm-1
-    bohr3 = 0.529177210  # bohr in Å
     for n in range(len(c.mass_centers)):
         for m in range(n + 1, len(c.mass_centers)):
             mass_center_bohr1 = c.mass_centers[n:n + 1] / bohr3
@@ -85,7 +83,20 @@ def spectra(clust: rc.Cluster, mu, H, bins, sigma):
     # Do the actual convolusion
     Ny = np.convolve(Ey, Cy, mode='same')
     # Plot everything in one final plot
-    plt.plot(Ex, Ey / np.max(Ey))
+    #plt.plot(Ex, Ey / np.max(Ey))
     # plt.plot(Ex,Cy/np.max(Cy))
-    plt.plot(Ex, Ny / np.max(Ny))
-    plt.show()
+    #plt.plot(Ex, Ny / np.max(Ny))
+    #plt.show()
+
+    u = np.linspace(0, 2*math.pi, bins)
+    D = np.zeros(bins)
+    gamma = (sigma / 2) / A
+    for x in range(bins):
+        for n in range(len(clust.mass_centers)):
+            for m in range(n+1, len(clust.mass_centers)):
+                u_v = np.array([0, math.sin(u[x]), math.cos(u[x])])
+                r = (clust.mass_centers[n:n+1] - clust.mass_centers[m:m+1]) / bohr3
+                j = np.inner(u_v, r) * H[n, m] / A
+                D[x] = D[x] + (gamma / (gamma**2 + (E[n] / A - E[m] / A)**2)) * (j**2)
+        D[x] = (1/len(clust.mass_centers)) * D[x]
+        print(D[x])
