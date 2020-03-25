@@ -23,7 +23,7 @@ def transform(m: np.array, trans: np.array):
 
 
 def parse_eq_xyz(eq: list):
-    l = eq
+    l = eq.copy()
     mult = np.zeros((1, 3))
     add = np.zeros((1, 3))
     for i in range(len(l)):
@@ -34,7 +34,7 @@ def parse_eq_xyz(eq: list):
             mult[0, i] = 1
             l[i] = l[i][1:]
     for i in range(len(l)):
-        if l[i] != "" and [i][0] == "+":
+        if l[i] != "" and l[i][0] == "+":
             l[i] = l[i][1:]
             w = l[i].split("/")
             number = int(w[0]) / int(w[1])
@@ -115,13 +115,12 @@ def copy_molecule(m1, m2: Molecule):
 
 
 def molecule_coincide(m1, m2: Molecule):
-    diff = 0.0
     for i in range(m1.num_atoms):
         diff = np.linalg.norm(m1.atom_coord[i:i + 1] - m2.atom_coord[i:i + 1])
-    if diff < 0.01:
-        return True
-    else:
-        return False
+        if diff < 0.05:
+            return True
+            break
+    return False
 
 
 class CifFile:
@@ -236,16 +235,16 @@ class Cluster:
     def build(self):
         for i1 in range(len(self.cif.xyz)):
             mult, add = parse_eq_xyz(self.cif.xyz[i1])
-            for a in range(-2, 3):
-                for b in range(-2, 3):
-                    for c in range(-2, 3):
+            for x in range(-3, 3):
+                for y in range(-3, 3):
+                    for z in range(-3, 3):
                         new_molecule = Molecule(self.cif.asym_unit.num_atoms)
                         copy_molecule(self.cif.asym_unit, new_molecule)
                         new_molecule.atom_coord = new_molecule.atom_coord * mult
                         new_molecule.atom_coord = new_molecule.atom_coord + add
-                        new_molecule.atom_coord = new_molecule.atom_coord + a * np.array([1, 0, 0])
-                        new_molecule.atom_coord = new_molecule.atom_coord + b * np.array([0, 1, 0])
-                        new_molecule.atom_coord = new_molecule.atom_coord + c * np.array([0, 0, 1])
+                        new_molecule.atom_coord = new_molecule.atom_coord + x * np.array([1, 0, 0])
+                        new_molecule.atom_coord = new_molecule.atom_coord + y * np.array([0, 1, 0])
+                        new_molecule.atom_coord = new_molecule.atom_coord + z * np.array([0, 0, 1])
                         coincide = False
                         for i2 in range(len(self.pre_molecules)):
                             if molecule_coincide(self.pre_molecules[i2], new_molecule):
@@ -335,11 +334,41 @@ class Cluster:
             self.molecules.append(new_molecule)
             mol.clear()
 
+    def to_cartesian(self, mol):
+        for i1 in range(len(mol)):
+            for i in range(23):
+                vector = np.zeros((3, 1))
+                vector[0, 0] = mol[i1].atom_coord[i, 0]
+                vector[1, 0] = mol[i1].atom_coord[i, 1]
+                vector[2, 0] = mol[i1].atom_coord[i, 2]
+                vector = np.matmul(self.cif.transform, vector)
+                mol[i1].atom_coord[i, 0] = vector[0, 0]
+                mol[i1].atom_coord[i, 1] = vector[1, 0]
+                mol[i1].atom_coord[i, 2] = vector[2, 0]
+
+    def print_to_file(self, mol, path):
+        try:
+            file = open(path, "w")
+        except OSError:
+            print("Could not write to file at: ", path)
+            exit(-1)
+        file.write(str(len(mol) * mol[0].num_atoms) + "\n")
+        file.write("xyz\n")
+        for i1 in range(len(mol)):
+            for i2 in range(mol[i1].num_atoms):
+                file.write(mol[i1].atom_label[i2] + " ")
+                file.write(repr(mol[i1].atom_coord[i2, 0]) + " ")
+                file.write(repr(mol[i1].atom_coord[i2, 1]) + " ")
+                file.write(repr(mol[i1].atom_coord[i2, 2]) + "\n")
+        file.close()
+
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
         self.cif = CifFile(path)
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
         self.build()
+        self.to_cartesian(self.pre_molecules)
+        self.print_to_file(self.pre_molecules, "D:\[work]\cluster.xyz")
 
 cl = Cluster(0, 0, 0, "D:\[work]\Kujo\KES48.cif")
