@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import dictionaries as dict
+import multiprocessing as mp
 
 
 def periodic_to_float(number, count=1):
@@ -126,11 +127,11 @@ class CifFile:
         # trying to open CIF file and read its contents
         try:
             file = open(path, "r")
+            contents = file.readlines()
+            file.close()
         except OSError:
             print("Could not open the CIF file at: ", path)
             exit(-1)
-        contents = file.readlines()
-        file.close()
         # init cif dictionary
         self.xyz = []
         data = {
@@ -249,23 +250,20 @@ class Cluster:
                         if new_molecule.inside() and not coincide:
                             self.pre_molecules.append(new_molecule)
 
-    def connectivity(self):
-        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
-                               self.pre_molecules[0].num_atoms))
-        for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-            for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-                m1 = n // self.pre_molecules[0].num_atoms
-                m1n = n % self.pre_molecules[0].num_atoms
-                m2 = k // self.pre_molecules[0].num_atoms
-                m2n = k % self.pre_molecules[0].num_atoms
-                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
-                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
-                dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
-                limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
-                             dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
-                if dist <= limit_dist:
-                    self.bonds[n, k] = 1
-                    self.bonds[k, n] = 1
+    def connectivity(self, line: int):
+        for k in range(line+1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            m1 = line // self.pre_molecules[0].num_atoms
+            m1n = line % self.pre_molecules[0].num_atoms
+            m2 = k // self.pre_molecules[0].num_atoms
+            m2n = k % self.pre_molecules[0].num_atoms
+            v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
+            v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
+            dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
+            limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                         dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+            if dist <= limit_dist:
+                self.bonds[line, k] = 1
+                self.bonds[k, line] = 1
 
     def simplify(self):
         self.mass_centers = np.zeros((len(self.molecules), 3))
@@ -365,7 +363,16 @@ class Cluster:
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
         self.build()
+        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+                               self.pre_molecules[0].num_atoms))
         self.to_cartesian(self.pre_molecules)
+        for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            self.connectivity(i)
+        #print("Parallel")
+        #if __name__ == '__main__':
+        #    pool = mp.Pool(mp.cpu_count())
+        #    pool.map(self.connectivity, [i for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms)])
+        #    pool.close()
         self.print_to_file(self.pre_molecules, "D:\[work]\cluster.xyz")
 
 
