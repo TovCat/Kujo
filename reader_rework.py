@@ -102,10 +102,8 @@ class Molecule:
                                         mass * self.internal_coord[i, 0] * self.internal_coord[i, 2]
             self.inertia_tensor[2, 0] = self.inertia_tensor[0, 2]
         self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
-        self.inertia_eig_val = self.inertia_eig_val / self.inertia_eig_val.max()
         for n in range(3):
-            for m in range(3):
-                self.inertia_eig_vec[n, m] = self.inertia_eig_vec[n, m] * self.inertia_eig_val[n]
+            self.inertia_eig_vec[n:n+1] = self.inertia_eig_vec[n:n+1] / np.linalg.norm(self.inertia_eig_vec[n:n+1])
 
 
 def copy_molecule(m1, m2: Molecule):
@@ -119,7 +117,6 @@ def molecule_coincide(m1, m2: Molecule):
         diff = np.linalg.norm(m1.atom_coord[i:i + 1] - m2.atom_coord[i:i + 1])
         if diff < 0.05:
             return True
-            break
     return False
 
 
@@ -254,15 +251,15 @@ class Cluster:
 
     def connectivity(self):
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
-                          self.pre_molecules[0].num_atoms))
+                               self.pre_molecules[0].num_atoms))
         for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
             for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
                 m1 = n // self.pre_molecules[0].num_atoms
                 m1n = n % self.pre_molecules[0].num_atoms
                 m2 = k // self.pre_molecules[0].num_atoms
                 m2n = k % self.pre_molecules[0].num_atoms
-                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n+1]
-                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n+1]
+                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
+                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
                 dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
                 limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
                              dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
@@ -274,22 +271,22 @@ class Cluster:
         self.mass_centers = np.zeros((len(self.molecules), 3))
         for i in range(len(self.molecules)):
             v = self.molecules[i].mass_center()
-            self.mass_centers[i:i+1] = self.molecules[i].mass_center()
+            self.mass_centers[i:i + 1] = self.molecules[i].mass_center()
             self.molecules[i].inertia()
 
     def multiply(self, a: int, b: int, c: int):
         self.mass_centers = np.zeros((len(self.molecules), 3))
         for i in range(len(self.molecules)):
             v = self.molecules[i].mass_center()
-            self.mass_centers[i:i+1] = self.molecules[i].mass_center()
+            self.mass_centers[i:i + 1] = self.molecules[i].mass_center()
         mass_centers_fract = np.zeros((len(self.molecules), 3))
         for i in range(len(self.molecules)):
-            mass_centers_fract[i:i+1] = np.matmul(self.cif.rev_transform, self.mass_centers[i:i+1])
+            mass_centers_fract[i:i + 1] = np.matmul(self.cif.rev_transform, self.mass_centers[i:i + 1])
         for i in range(len(self.molecules)):
             for x in range(a + 1):
                 for y in range(b + 1):
                     for z in range(c + 1):
-                        point = mass_centers_fract[i:i+1] + np.array([x, y, z])
+                        point = mass_centers_fract[i:i + 1] + np.array([x, y, z])
                         if (0.0 <= point[0, 0] <= a) and (0.0 <= point[1, 0] <= b) and (0.0 <= point[2, 0] <= c):
                             new_molecule = Molecule(self.molecules[i].num_atoms)
                             copy_molecule(self.molecules[i], new_molecule)
@@ -330,7 +327,7 @@ class Cluster:
                 m = mol[i] // self.pre_molecules[0].num_atoms
                 n = mol[i] % self.pre_molecules[0].num_atoms
                 new_molecule.atom_label[i] = self.pre_molecules[m].atom_label[n]
-                new_molecule.atom_coord[i:i+1] = self.pre_molecules[m].atom_coord[n:n+1]
+                new_molecule.atom_coord[i:i + 1] = self.pre_molecules[m].atom_coord[n:n + 1]
             self.molecules.append(new_molecule)
             mol.clear()
 
@@ -370,5 +367,6 @@ class Cluster:
         self.build()
         self.to_cartesian(self.pre_molecules)
         self.print_to_file(self.pre_molecules, "D:\[work]\cluster.xyz")
+
 
 cl = Cluster(0, 0, 0, "D:\[work]\Kujo\KES48.cif")
