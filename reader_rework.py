@@ -329,6 +329,8 @@ class Cluster:
             self.molecules.append(new_molecule)
             mol.clear()
 
+    def clean_up(self):
+
     def to_cartesian(self, mol):
         for i1 in range(len(mol)):
             for i in range(23):
