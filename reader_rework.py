@@ -273,28 +273,30 @@ class Cluster:
             self.molecules[i].inertia()
 
     def multiply(self, a: int, b: int, c: int):
-        self.mass_centers = np.zeros((len(self.molecules), 3))
+        self.mass_centers = []
         for i in range(len(self.molecules)):
-            v = self.molecules[i].mass_center()
-            self.mass_centers[i:i + 1] = self.molecules[i].mass_center()
-        mass_centers_fract = np.zeros((len(self.molecules), 3))
-        for i in range(len(self.molecules)):
-            mass_centers_fract[i:i + 1] = np.matmul(self.cif.rev_transform, self.mass_centers[i:i + 1])
+            self.mass_centers.append(self.molecules[i].mass_center())
+        mass_centers_fract = []
+        for i in range(len(self.mass_centers)):
+            t = np.transpose(self.mass_centers[i])
+            t = np.matmul(self.cif.rev_transform, t)
+            mass_centers_fract.append(np.transpose(t))
         for i in range(len(self.molecules)):
             for x in range(a + 1):
                 for y in range(b + 1):
                     for z in range(c + 1):
-                        point = mass_centers_fract[i:i + 1] + np.array([x, y, z])
-                        if (0.0 <= point[0, 0] <= a) and (0.0 <= point[1, 0] <= b) and (0.0 <= point[2, 0] <= c):
-                            new_molecule = Molecule(self.molecules[i].num_atoms)
-                            copy_molecule(self.molecules[i], new_molecule)
-                            new_molecule.atom_coord = new_molecule.atom_coord + np.array([x, y, z])
-                            coincide = False
-                            for i2 in range(len(self.molecules)):
-                                if molecule_coincide(self.molecules[i2], new_molecule):
-                                    coincide = True
-                            if not coincide:
-                                self.molecules.append(new_molecule)
+                        new_molecule = Molecule(self.molecules[i].num_atoms)
+                        copy_molecule(self.molecules[i], new_molecule)
+                        trans = np.transpose(np.array([x, y, z]))
+                        trans = np.matmul(self.cif.transform, trans)
+                        trans = np.transpose(trans)
+                        new_molecule.atom_coord = new_molecule.atom_coord + trans
+                        coincide = False
+                        for i2 in range(len(self.molecules)):
+                            if molecule_coincide(self.molecules[i2], new_molecule):
+                                coincide = True
+                        if not coincide:
+                            self.molecules.append(new_molecule)
 
     def rebuild(self):
         checked = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, 1))
@@ -382,7 +384,9 @@ class Cluster:
         for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
             self.connectivity(i)
         self.rebuild()
-        self.print_to_file(self.pre_molecules, "D:\[work]\cluster.xyz")
+        if a != 0 and b != 0 and c != 0:
+            self.multiply(a, b, c)
+        self.print_to_file(self.molecules, "D:\[work]\cluster.xyz")
 
 
-cl = Cluster(0, 0, 0, "D:\[work]\Kujo\KES48.cif")
+cl = Cluster(1, 1, 1, "D:\[work]\Kujo\KES48.cif")
