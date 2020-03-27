@@ -304,18 +304,12 @@ class Cluster:
             for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
                 if checked[i, 0] == 0:
                     mol.append(i)
-                    checked[i, 0] = 1
                     break
-            inner_flag = False
-            while not inner_flag:
-                old_len = len(mol)
-                for i1 in range(len(mol)):
-                    for i2 in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-                        if self.bonds[i1, i2] == 1:
-                            mol.append(i2)
-                            checked[i2, 0] = 1
-                if old_len == len(mol):
-                    inner_flag = True
+            for i1 in mol:
+                for i2 in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                    if self.bonds[i1, i2] == 1 and i2 not in mol:
+                        mol.append(i2)
+                checked[i1, 0] = 1
             flag = True
             for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
                 if checked[i, 0] != 1:
@@ -324,12 +318,29 @@ class Cluster:
             for i in range(len(mol)):
                 m = mol[i] // self.pre_molecules[0].num_atoms
                 n = mol[i] % self.pre_molecules[0].num_atoms
-                new_molecule.atom_label[i] = self.pre_molecules[m].atom_label[n]
+                new_molecule.atom_label.append(self.pre_molecules[m].atom_label[n])
                 new_molecule.atom_coord[i:i + 1] = self.pre_molecules[m].atom_coord[n:n + 1]
             self.molecules.append(new_molecule)
             mol.clear()
-
-    def clean_up(self):
+        mc = []
+        mc_fract = []
+        for i in range(len(self.molecules)):
+            mc.append(self.molecules[i].mass_center())
+            mc_t = np.transpose(mc[i])
+            mc_t = np.matmul(self.cif.rev_transform, mc_t)
+            mc_fract.append(np.transpose(mc_t))
+        up_limit = 1.001
+        low_limit = -0.001
+        for_deletion = []
+        new_mol = []
+        for m in self.molecules:
+            n = self.molecules.index(m)
+            if mc_fract[n][0, 0] >= up_limit or mc_fract[n][0, 1] >= up_limit or mc_fract[n][0, 2] >= up_limit or mc_fract[n][0, 0] <= low_limit or mc_fract[n][0, 1] <= low_limit or mc_fract[n][0, 2] <= low_limit:
+                for_deletion.append(n)
+        for i in range(len(self.molecules)):
+            if i not in for_deletion:
+                new_mol.append(self.molecules[i])
+        self.molecules = new_mol
 
     def to_cartesian(self, mol):
         for i1 in range(len(mol)):
@@ -370,11 +381,7 @@ class Cluster:
         self.to_cartesian(self.pre_molecules)
         for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
             self.connectivity(i)
-        #print("Parallel")
-        #if __name__ == '__main__':
-        #    pool = mp.Pool(mp.cpu_count())
-        #    pool.map(self.connectivity, [i for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms)])
-        #    pool.close()
+        self.rebuild()
         self.print_to_file(self.pre_molecules, "D:\[work]\cluster.xyz")
 
 
