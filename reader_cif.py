@@ -1,22 +1,7 @@
-#   reader_cif.py
-#       simple .cif file reader that extracts all necessary data from the file and builds molecular cluster
-#   Python 3.8 + math, numpy
-#
-#   Written by Igor Koskin
-#   e-mail: osingran@yandex.ru
-#
-#   last update: 11.03.2020
-#   version: 0.03
-
-
-import math
 import numpy as np
-import time
+import math
 import dictionaries as dict
-
-nucl = ["H", "C", "O"]
-nucl_mass = [1, 12, 16]
-nucl_vdw = [1.20, 1.70, 1.52]
+import multiprocessing as mp
 
 
 def periodic_to_float(number, count=1):
@@ -28,24 +13,39 @@ def periodic_to_float(number, count=1):
         while i < count:
             l1 = len(number[number.find(".") + 1: number.find("(")])
             l2 = len(number[number.find("(") + 1: number.find(")")])
-            temp = temp + float(number[number.find("(") + 1:number.find(")")]) * math.pow(10, -1 * (l1 + (i + 1) * l2))
+            temp = temp + float(number[number.find("(") + 1:number.find(")")]) * 10 ** (-1 * (l1 + (i + 1) * l2))
             i = i + 1
         return temp
 
 
-def hall_parse(s=""):
-    if s == "-P 2ybc":
-        return 14
+def transform(m: np.array, trans: np.array):
+    for i in range(m.shape[0]):
+        m[i:i + 1] = np.matmul(m[i:i + 1], trans)
 
 
-def hm_parse(s=""):
-    if s == "P12(1)/c1":
-        return 14
-
-
-def hm_alt_parse(s=""):
-    if s == "P 21/c":
-        return 14
+def parse_eq_xyz(eq: list):
+    l = eq.copy()
+    mult = np.zeros((1, 3))
+    add = np.zeros((1, 3))
+    for i in range(len(l)):
+        if l[i][0] == "-":
+            mult[0, i] = -1
+            l[i] = l[i][2:]
+        else:
+            mult[0, i] = 1
+            l[i] = l[i][1:]
+    for i in range(len(l)):
+        if l[i] != "" and l[i][0] == "+":
+            l[i] = l[i][1:]
+            w = l[i].split("/")
+            number = int(w[0]) / int(w[1])
+            add[0, i] = number
+        elif l[i] != "" and l[i][0] == "-":
+            l[i] = l[i][1:]
+            w = l[i].split("/")
+            number = int(w[0]) / int(w[1])
+            add[0, i] = -1 * number
+    return mult, add
 
 
 class Molecule:
@@ -54,10 +54,10 @@ class Molecule:
         self.num_atoms = n
         self.atom_label = []
         self.atom_coord = np.zeros((n, 3))
+        self.threshold = 0.1
         self.inertia_tensor = np.zeros((3, 3))
         self.inertia_eig_val = np.zeros((3, 1))
         self.inertia_eig_vec = np.zeros((3, 3))
-        self.threshold = 0.1
 
     def inside(self):
         a1 = 1 + self.threshold
@@ -72,73 +72,6 @@ class Molecule:
             else:
                 r = False
         return r
-
-    def inverse(self, x_i, y_i, z_i):
-        v = np.array([x_i, y_i, z_i])
-        self.atom_coord = 2 * v - self.atom_coord
-
-    def translate(self, x_t, y_t, z_t):
-        v = np.array([x_t, y_t, z_t])
-        self.atom_coord = self.atom_coord + v
-
-    def mirror(self, axis, c1):
-        for i in range(self.num_atoms):
-            self.atom_coord[i, axis] = self.atom_coord[i, axis] + 2 * (c1 - self.atom_coord[i, axis])
-
-    def rotate(self, axis, order, c1, c2):
-        angle = np.deg2rad(360 / order)
-        cosa = np.cos(angle)
-        sina = np.sin(angle)
-        rel = np.zeros((1, 3))
-        if axis == 0:
-            matrix = np.array([[1, 0, 0], [0, cosa, -sina], [0, sina, cosa]])
-        elif axis == 1:
-            matrix = np.array([[cosa, 0, sina], [0, 1, 0], [-sina, 0, cosa]])
-        elif axis == 2:
-            matrix = np.array([[cosa, -sina, 0], [sina, cosa, 0], [0, 0, 1]])
-        for i in range(self.num_atoms):
-            if axis == 0:
-                rel = self.atom_coord[i:i + 1] - np.array([0, c1, c2])
-            elif axis == 1:
-                rel = self.atom_coord[i:i + 1] - np.array([c1, 0, c2])
-            elif axis == 2:
-                rel = self.atom_coord[i:i + 1] - np.array([c1, c2, 0])
-            v = rel
-            v = np.matmul(v, matrix)
-            if axis == 0:
-                rel = v + np.array([0, c1, c2])
-            elif axis == 1:
-                rel = v + np.array([c1, 0, c2])
-            elif axis == 2:
-                rel = v + np.array([c1, c2, 0])
-            self.atom_coord[i:i + 1] = rel
-
-    def screw(self, axis, order, step, c1, c2):
-        self.rotate(axis, order, c1, c2)
-        if axis == 0:
-            self.translate(step, 0, 0)
-        elif axis == 1:
-            self.translate(0, step, 0)
-        elif axis == 2:
-            self.translate(0, 0, step)
-
-    def glide(self, axis, step, c1):
-        self.mirror(axis, c1)
-        if axis == 0:
-            self.translate(step, 0, 0)
-        elif axis == 1:
-            self.translate(0, step, 0)
-        elif axis == 2:
-            self.translate(0, 0, step)
-
-    def rotoinversion(self, axis, order, x, y, z):
-        if axis == 0:
-            self.rotate(axis, order, y, z)
-        elif axis == 1:
-            self.rotate(axis, order, x, z)
-        elif axis == 2:
-            self.rotate(axis, order, x, y)
-        self.inverse(x, y, z)
 
     def mass_center(self):
         r = np.zeros((1, 3))
@@ -170,10 +103,8 @@ class Molecule:
                                         mass * self.internal_coord[i, 0] * self.internal_coord[i, 2]
             self.inertia_tensor[2, 0] = self.inertia_tensor[0, 2]
         self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
-        self.inertia_eig_val = self.inertia_eig_val / self.inertia_eig_val.max()
         for n in range(3):
-            for m in range(3):
-                self.inertia_eig_vec[n, m] = self.inertia_eig_vec[n, m] * self.inertia_eig_val[n]
+            self.inertia_eig_vec[n:n+1] = self.inertia_eig_vec[n:n+1] / np.linalg.norm(self.inertia_eig_vec[n:n+1])
 
 
 def copy_molecule(m1, m2: Molecule):
@@ -183,179 +114,93 @@ def copy_molecule(m1, m2: Molecule):
 
 
 def molecule_coincide(m1, m2: Molecule):
-    diff = 0.0
     for i in range(m1.num_atoms):
-        diff = np.linalg.norm(m1.atom_coord[i:i+1] - m2.atom_coord[i:i+1])
-    if diff < 0.01:
-        return True
-    else:
-        return False
-
-
-# axis (a - 0, b - 1, c - 2); order; coord1; coord2 - rotations, screws
-# axis (a - 0, b - 1, c - 2); coord1 - mirrors, glides
-class CellSymmetry:
-    def __init__(self, table_number: int):
-        if table_number == 1:
-            self.no_inverses = True
-            self.no_screws = True
-            self.no_glides = True
-            self.no_rotations = True
-            self.no_rotoinversions = True
-            self.no_mirrors = True
-        if table_number == 2:
-            self.inverses = np.array([[0, 0, 0], [0, 0, 0.5], [0, 0, 1.0], [0, 0.5, 0], [0, 0.5, 0.5], [0, 0.5, 1.0],
-                                      [0, 1.0, 0], [0, 1.0, 0.5], [0, 1.0, 1.0], [0.5, 0, 0], [0.5, 0, 0.5],
-                                      [0.5, 0, 1.0], [0.5, 0.5, 0], [0.5, 0.5, 0.5], [0.5, 0.5, 1.0], [0.5, 1.0, 0],
-                                      [0.5, 1.0, 0.5], [0.5, 1.0, 1.0], [1.0, 0, 0], [1.0, 0, 0.5], [1.0, 0, 1.0],
-                                      [1.0, 0.5, 0], [1.0, 0.5, 0.5], [1.0, 0.5, 1.0], [1.0, 1.0, 0], [1.0, 1.0, 0.5],
-                                      [1.0, 1.0, 1.0]])
-            self.no_inverses = False
-            self.no_screws = True
-            self.no_glides = True
-            self.no_rotations = True
-            self.no_rotoinversions = True
-            self.no_mirrors = True
-        if table_number == 3:
-            self.rotations = np.array([[1, 2, 0, 0], [1, 2, 0, 0.5], [1, 2, 0, 1], [1, 2, 0.5, 0], [1, 2, 0.5, 0.5],
-                                       [1, 2, 0.5, 1], [1, 2, 1, 0], [1, 2, 1, 0.5], [1, 2, 1, 1]])
-            self.no_inverses = True
-            self.no_screws = True
-            self.no_glides = True
-            self.no_rotations = False
-            self.no_rotoinversions = True
-            self.no_mirrors = True
-        if table_number == 4:
-            self.screws = np.array([[1, 2, 0, 0], [1, 2, 0, 0.5], [1, 2, 0, 1], [1, 2, 0.5, 0], [1, 2, 0.5, 0.5],
-                                    [1, 2, 0.5, 1], [1, 2, 1, 0], [1, 2, 1, 0.5], [1, 2, 1, 1]])
-            self.no_inverses = True
-            self.no_screws = False
-            self.no_glides = True
-            self.no_rotations = True
-            self.no_rotoinversions = True
-            self.no_mirrors = True
-        if table_number == 5:
-            self.rotations = np.array([[1, 2, 0, 0], [1, 2, 0, 0.5], [1, 2, 0, 1], [1, 2, 0.5, 0], [1, 2, 0.5, 0.5],
-                                       [1, 2, 0.5, 1], [1, 2, 1, 0], [1, 2, 1, 0.5], [1, 2, 1, 1]])
-            self.screws = np.array([[1, 2, 0.25, 0], [1, 2, 0.25, 0.5], [1, 2, 0.25, 1], [1, 2, 0.75, 0],
-                                    [1, 2, 0.75, 0.5], [1, 2, 0.75, 1]])
-            self.no_inverses = True
-            self.no_screws = False
-            self.no_glides = True
-            self.no_rotations = False
-            self.no_rotoinversions = True
-            self.no_mirrors = True
-        if table_number == 6:
-            self.mirrors = np.array([[1, 0.5]])
-            self.no_inverses = True
-            self.no_screws = True
-            self.no_glides = True
-            self.no_rotations = True
-            self.no_rotoinversions = True
-            self.no_mirrors = False
-
-        if table_number == 14:
-            self.inverses = np.array([[0, 0, 0], [0, 0, 0.5], [0, 0, 1.0], [0, 0.5, 0], [0, 0.5, 0.5], [0, 0.5, 1.0],
-                                      [0, 1.0, 0], [0, 1.0, 0.5], [0, 1.0, 1.0], [0.5, 0, 0], [0.5, 0, 0.5],
-                                      [0.5, 0, 1.0], [0.5, 0.5, 0], [0.5, 0.5, 0.5], [0.5, 0.5, 1.0], [0.5, 1.0, 0],
-                                      [0.5, 1.0, 0.5], [0.5, 1.0, 1.0], [1.0, 0, 0], [1.0, 0, 0.5], [1.0, 0, 1.0],
-                                      [1.0, 0.5, 0], [1.0, 0.5, 0.5], [1.0, 0.5, 1.0], [1.0, 1.0, 0], [1.0, 1.0, 0.5],
-                                      [1.0, 1.0, 1.0]])
-            self.screws = np.array([[1, 2, 0, 0.25], [1, 2, 0, 0.75], [1, 2, 0.5, 0.25], [1, 2, 0.5, 0.75],
-                                    [1, 2, 1.0, 0.25], [1, 2, 1.0, 0.75]])
-            self.glides = np.array([[1, 0.25], [1, 0.75]])
-
-            self.no_inverses = False
-            self.no_screws = False
-            self.no_glides = False
-            self.no_rotations = True
-            self.no_rotoinversions = True
-            self.no_mirrors = True
+        diff = np.linalg.norm(m1.atom_coord[i:i + 1] - m2.atom_coord[i:i + 1])
+        if diff < 0.05:
+            return True
+    return False
 
 
 class CifFile:
 
-    def __init__(self, init_path=""):
-        print("Read CIF File")
-        cif_time = time.time()
-        file = open(init_path, "r")
-        contents = file.readlines()
-        file.close()
-        self.it_number = 0
-        index = -1
-        symmetry_detected = False
+    def __init__(self, path=""):
+        # trying to open CIF file and read its contents
+        try:
+            file = open(path, "r")
+            contents = file.readlines()
+            file.close()
+        except OSError:
+            print("Could not open the CIF file at: ", path)
+            exit(-1)
+        # init cif dictionary
+        self.xyz = []
+        data = {
+            "_cell_length_a": "",
+            "_cell_length_b": "",
+            "_cell_length_c": "",
+            "_cell_angle_alpha": "",
+            "_cell_angle_beta": "",
+            "_cell_angle_gamma": "",
+            "_symmetry_space_group_name_H-M": "",
+            "_symmetry_space_group_name_Hall": "",
+            "loop_": []
+        }
+        # first survey through contents
+        index = 0
         for x in contents:
-            index = index + 1
-            if x[0] == "#":
-                continue
             words = x.split()
-            if len(words) != 0:
-                for i in range(len(words)):
-                    words[i].strip()
-                if words[0][0] == "_":
-                    if words[0] == "_cell_length_a":
-                        self.cell_a = periodic_to_float(words[1])
-                    if words[0] == "_cell_length_b":
-                        self.cell_b = periodic_to_float(words[1])
-                    if words[0] == "_cell_length_c":
-                        self.cell_c = periodic_to_float(words[1])
-                    if words[0] == "_cell_angle_alpha":
-                        self.cell_alpha = periodic_to_float(words[1])
-                    if words[0] == "_cell_angle_beta":
-                        self.cell_beta = periodic_to_float(words[1])
-                    if words[0] == "_cell_angle_gamma":
-                        self.cell_gamma = periodic_to_float(words[1])
-                    if words[0] == "_cell_angle_volume":
-                        self.cell_volume = periodic_to_float(words[1])
-                    if words[0] == "_space_group_IT_number" and symmetry_detected is False:
-                        self.it_number = int(words[1])
-                        symmetry_detected = True
-                    if words[0] == "_symmetry_space_group_name_H-M_alt" or words[
-                        0] == "_symmetry_space_group_name_Hall" or \
-                            words[0] == "_symmetry_space_group_name_H-M":
-                        words[1].replace("'", "")
-                        if words[0] == "_symmetry_space_group_name_H-M_alt" and symmetry_detected is False:
-                            self.it_number = hm_alt_parse(words[1])
-                        elif words[0] == "_symmetry_space_group_name_H-M" and symmetry_detected is False:
-                            self.it_number = hm_parse(words[1])
-                        elif words[0] == "_symmetry_space_group_name_Hall" and symmetry_detected is False:
-                            self.it_number = hall_parse(words[1])
-                if words[0] == "loop_":
-                    index_loop = index + 1
-                    s = contents[index_loop]
-                    loop_list = []
-                    while s != "" and s != "loop_":
-                        loop_list.append(s)
-                        index_loop = index_loop + 1
-                        s = contents[index_loop]
-                        s = s.strip()
-                    type_pos = 0
-                    fract_x_pos = 0
-                    fract_y_pos = 0
-                    fract_z_pos = 0
-                    loop_end_found = False
-                    loop_end = 0
-                    for y in loop_list:
-                        words_loop = y.split()
-                        if words_loop[0] == "_atom_site_type_symbol":
-                            type_pos = loop_list.index(y)
-                        if words_loop[0] == "_atom_site_fract_x":
-                            fract_x_pos = loop_list.index(y)
-                        if words_loop[0] == "_atom_site_fract_y":
-                            fract_y_pos = loop_list.index(y)
-                        if words_loop[0] == "_atom_site_fract_z":
-                            fract_z_pos = loop_list.index(y)
-                        if loop_end_found is False and words_loop[0][0] != "_":
-                            loop_end = loop_list.index(y)
-                            loop_end_found = True
-                    if type_pos != 0 and fract_x_pos != 0 and fract_y_pos != 0 and fract_z_pos != 0:
-                        self.asym_unit = Molecule(len(loop_list) - loop_end)
-                        for i in range(loop_end, len(loop_list)):
-                            words_coord = loop_list[i].split()
-                            self.asym_unit.atom_label.append(words_coord[type_pos])
-                            self.asym_unit.atom_coord[i - loop_end, 0] = periodic_to_float(words_coord[fract_x_pos])
-                            self.asym_unit.atom_coord[i - loop_end, 1] = periodic_to_float(words_coord[fract_y_pos])
-                            self.asym_unit.atom_coord[i - loop_end, 2] = periodic_to_float(words_coord[fract_z_pos])
+            if len(words) > 0:
+                if words[0] in data:
+                    if words[0] != "loop_":
+                        data[words[0]] = words[1]
+                    else:
+                        data["loop_"].append(index)
+            index = index + 1
+        # read the asymmetric unit
+        for x in data["loop_"]:
+            index_loop = x + 1
+            s = contents[index_loop].strip()
+            loop_list = []
+            while s != "" and s != "loop_":
+                loop_list.append(s)
+                index_loop = index_loop + 1
+                s = contents[index_loop].strip()
+            if loop_list[0] == "_symmetry_equiv_pos_as_xyz":
+                for i in range(1, len(loop_list)):
+                    self.xyz.append(loop_list[i].replace("'", "").split(", "))
+            positions = {
+                "_atom_site_type_symbol": 0,
+                "_atom_site_fract_x": 0,
+                "_atom_site_fract_y": 0,
+                "_atom_site_fract_z": 0
+            }
+            loop_end = 0
+            for y in loop_list:
+                words_loop = y.split()
+                if words_loop[0] in positions:
+                    positions[words_loop[0]] = loop_list.index(y)
+                if words_loop[0][0] != "_":
+                    loop_end = loop_list.index(y)
+                    break
+            if not (0 in positions.values()):
+                self.asym_unit = Molecule(len(loop_list) - loop_end)
+                for i in range(loop_end, len(loop_list)):
+                    words_coord = loop_list[i].split()
+                    self.asym_unit.atom_label.append(words_coord[positions["_atom_site_type_symbol"]])
+                    self.asym_unit.atom_coord[i - loop_end, 0] = \
+                        periodic_to_float(words_coord[positions["_atom_site_fract_x"]])
+                    self.asym_unit.atom_coord[i - loop_end, 1] = \
+                        periodic_to_float(words_coord[positions["_atom_site_fract_y"]])
+                    self.asym_unit.atom_coord[i - loop_end, 2] = \
+                        periodic_to_float(words_coord[positions["_atom_site_fract_z"]])
+            # convert cell parameters
+            self.cell_a = periodic_to_float(data["_cell_length_a"])
+            self.cell_b = periodic_to_float(data["_cell_length_b"])
+            self.cell_c = periodic_to_float(data["_cell_length_c"])
+            self.cell_alpha = periodic_to_float(data["_cell_angle_alpha"])
+            self.cell_beta = periodic_to_float(data["_cell_angle_beta"])
+            self.cell_gamma = periodic_to_float(data["_cell_angle_gamma"])
+        # generate transformation matrices
         cosa = np.cos(np.deg2rad(self.cell_alpha))
         cosb = np.cos(np.deg2rad(self.cell_beta))
         cosg = np.cos(np.deg2rad(self.cell_gamma))
@@ -370,188 +215,178 @@ class CifFile:
         self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
         self.transform[2, 2] = self.cell_c * volume / sing
         self.rev_transform = np.linalg.inv(self.transform)
-        self.a_trans_cart = np.zeros((3, 1))
-        self.b_trans_cart = np.zeros((3, 1))
-        self.c_trans_cart = np.zeros((3, 1))
-        self.a_trans_cart[0, 0] = 1.0
-        self.b_trans_cart[1, 0] = 1.0
-        self.c_trans_cart[2, 0] = 1.0
-        self.a_trans_cart = np.matmul(self.transform, self.a_trans_cart)
-        self.b_trans_cart = np.matmul(self.transform, self.b_trans_cart)
-        self.c_trans_cart = np.matmul(self.transform, self.c_trans_cart)
-        self.a_trans_cart = np.transpose(self.a_trans_cart)
-        self.b_trans_cart = np.transpose(self.b_trans_cart)
-        self.c_trans_cart = np.transpose(self.c_trans_cart)
-        print("   Done: %s" % (time.time() - cif_time))
+        # extract xyz eq positions if they're not yet extracted
+        if len(self.xyz) == 0:
+            if data["_symmetry_space_group_name_Hall"] != "":
+                self.xyz = dict.SymOpsHall[data["_symmetry_space_group_name_Hall"]]
+            elif data["_symmetry_space_group_name_H-M"] != "":
+                data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace("(", "")
+                data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace(")", "")
+                self.xyz = dict.SymOpsHall[dict.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
+            else:
+                print("No symmetry detected in CIF file!")
+                exit(-1)
 
 
 class Cluster:
 
-    def build(self, t_number: int):
-        print("Build pre-cluster")
-        pre_cluster_time = time.time()
-        cell = CellSymmetry(t_number)
-        i = 0
-        while i < len(self.pre_molecules):
-            if not cell.no_inverses:
-                for i1 in range(cell.inverses.shape[0]):
-                    new_molecule = Molecule(self.cif.asym_unit.num_atoms)
-                    copy_molecule(self.pre_molecules[i], new_molecule)
-                    new_molecule.inverse(cell.inverses[i1, 0], cell.inverses[i1, 1], cell.inverses[i1, 2])
-                    coincide = False
-                    for i3 in range(len(self.pre_molecules)):
-                        if molecule_coincide(self.pre_molecules[i3], new_molecule):
-                            coincide = True
-                    if new_molecule.inside() and not coincide:
-                        self.pre_molecules.append(new_molecule)
-            if not cell.no_rotations:
-                for i1 in range(cell.mirrors.shape[0]):
-                    new_molecule = Molecule(self.cif.asym_unit.num_atoms)
-                    copy_molecule(self.pre_molecules[i], new_molecule)
-                    new_molecule.mirror(cell.mirrors[i1, 0], cell.mirrors[i1, 1])
-                    coincide = False
-                    for i3 in range(len(self.pre_molecules)):
-                        if molecule_coincide(self.pre_molecules[i3], new_molecule):
-                            coincide = True
-                    if new_molecule.inside() and not coincide:
-                        self.pre_molecules.append(new_molecule)
-            if not cell.no_screws:
-                for i1 in range(cell.screws.shape[0]):
-                    for i4 in range(1, int(cell.screws[i1, 1])):
+    def build(self):
+        for i1 in range(len(self.cif.xyz)):
+            mult, add = parse_eq_xyz(self.cif.xyz[i1])
+            for x in range(-3, 3):
+                for y in range(-3, 3):
+                    for z in range(-3, 3):
                         new_molecule = Molecule(self.cif.asym_unit.num_atoms)
-                        copy_molecule(self.pre_molecules[i], new_molecule)
-                        step = i4 * (1 / cell.screws[i1, 1])
-                        new_molecule.screw(cell.screws[i1, 0], cell.screws[i1, 1], step, cell.screws[i1, 2],
-                                           cell.screws[i1, 3])
+                        copy_molecule(self.cif.asym_unit, new_molecule)
+                        new_molecule.atom_coord = new_molecule.atom_coord * mult
+                        new_molecule.atom_coord = new_molecule.atom_coord + add
+                        new_molecule.atom_coord = new_molecule.atom_coord + x * np.array([1, 0, 0])
+                        new_molecule.atom_coord = new_molecule.atom_coord + y * np.array([0, 1, 0])
+                        new_molecule.atom_coord = new_molecule.atom_coord + z * np.array([0, 0, 1])
                         coincide = False
-                        for i3 in range(len(self.pre_molecules)):
-                            if molecule_coincide(self.pre_molecules[i3], new_molecule):
+                        for i2 in range(len(self.pre_molecules)):
+                            if molecule_coincide(self.pre_molecules[i2], new_molecule):
                                 coincide = True
                         if new_molecule.inside() and not coincide:
                             self.pre_molecules.append(new_molecule)
-            # if not cell.no_glides:
-            #    for i1 in range(cell.glides.shape[0]):
-            #        new_molecule = mol.Molecule(23)
-            #        mol.copy_molecule(cluster[i], new_molecule)
-            #        new_molecule.glide(cell.glides[i1, 0], 0.5, cell.glides[i1, 1])
-            #        coincide = False
-            #        for i3 in range(len(cluster)):
-            #            if mol.molecule_coincide(cluster[i3], new_molecule):
-            #                coincide = True
-            #        if new_molecule.inside() and not coincide:
-            #            cluster.append(new_molecule)
-            #        del new_molecule
-            i = i + 1
-        print("   Done: %s" % (time.time() - pre_cluster_time))
 
-    def rebuild(self):
-        print("Build connectivity matrix")
-        connectivity_time = time.time()
-        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
-                          self.pre_molecules[0].num_atoms))
-        for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-            for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-                m1 = n // self.pre_molecules[0].num_atoms
-                m1n = n % self.pre_molecules[0].num_atoms
-                m2 = k // self.pre_molecules[0].num_atoms
-                m2n = k % self.pre_molecules[0].num_atoms
-                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n+1]
-                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n+1]
-                dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
-                limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
-                             dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
-                if dist <= limit_dist:
-                    self.bonds[n, k] = 1
-                    self.bonds[k, n] = 1
-        print("   Done: %s" % (time.time() - connectivity_time))
-        print("Finalize cluster")
-        f_cluster_time = time.time()
-        au_bonds = np.zeros((len(self.pre_molecules), len(self.pre_molecules)))
-        connected = False
-        for i1 in range(len(self.pre_molecules)):
-            for i2 in range(i1 + 1, len(self.pre_molecules)):
-                if connected:
-                    connected = False
-                    break
-                for i3 in range(self.pre_molecules[0].num_atoms):
-                    if connected:
-                        break
-                    for i4 in range(self.pre_molecules[0].num_atoms):
-                        if bonds[
-                            i1 * self.pre_molecules[0].num_atoms + i3, i2 * self.pre_molecules[0].num_atoms + i4] == 1:
-                            au_bonds[i1, i2] = 1
-                            au_bonds[i2, i1] = 1
-                            connected = True
-                            break
-        self.molecules = []
-        for i1 in range(len(self.pre_molecules)):
-            for i2 in range(len(self.pre_molecules)):
-                if au_bonds[i1, i2] == 1:
-                    au_bonds[i1, i2] = 0
-                    au_bonds[i2, i1] = 0
-                    self.molecules.append(Molecule(self.pre_molecules[0].num_atoms * 2))
-                    for i3 in range(self.pre_molecules[0].num_atoms):
-                        self.molecules[len(self.molecules) - 1].atom_label.append(self.pre_molecules[i1].atom_label[i3])
-                        self.molecules[len(self.molecules) - 1].atom_coord[i3, 0] = \
-                            self.pre_molecules[i1].atom_coord[i3, 0]
-                        self.molecules[len(self.molecules) - 1].atom_coord[i3, 1] = \
-                            self.pre_molecules[i1].atom_coord[i3, 1]
-                        self.molecules[len(self.molecules) - 1].atom_coord[i3, 2] = \
-                            self.pre_molecules[i1].atom_coord[i3, 2]
-                    for i3 in range(self.pre_molecules[0].num_atoms):
-                        self.molecules[len(self.molecules) - 1].atom_label.append(self.pre_molecules[i2].atom_label[i3])
-                        self.molecules[len(self.molecules) - 1].atom_coord[i3 + self.pre_molecules[0].num_atoms, 0] = \
-                            self.pre_molecules[i2].atom_coord[i3, 0]
-                        self.molecules[len(self.molecules) - 1].atom_coord[i3 + self.pre_molecules[0].num_atoms, 1] = \
-                            self.pre_molecules[i2].atom_coord[i3, 1]
-                        self.molecules[len(self.molecules) - 1].atom_coord[i3 + self.pre_molecules[0].num_atoms, 2] = \
-                            self.pre_molecules[i2].atom_coord[i3, 2]
-        print("   Done: %s" % (time.time() - f_cluster_time))
+    def connectivity(self, line: int):
+        for k in range(line+1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            m1 = line // self.pre_molecules[0].num_atoms
+            m1n = line % self.pre_molecules[0].num_atoms
+            m2 = k // self.pre_molecules[0].num_atoms
+            m2n = k % self.pre_molecules[0].num_atoms
+            v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
+            v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
+            dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
+            limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                         dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+            if dist <= limit_dist:
+                self.bonds[line, k] = 1
+                self.bonds[k, line] = 1
 
     def simplify(self):
-        print("Simplify cluster")
-        simp_time = time.time()
         self.mass_centers = np.zeros((len(self.molecules), 3))
         for i in range(len(self.molecules)):
             v = self.molecules[i].mass_center()
-            self.mass_centers[i:i+1] = self.molecules[i].mass_center()
+            self.mass_centers[i:i + 1] = self.molecules[i].mass_center()
             self.molecules[i].inertia()
-        print("   Done: %s" % (time.time() - simp_time))
 
-    def to_cartesian(self):
-        for i1 in range(len(self.pre_molecules)):
+    def multiply(self, a: int, b: int, c: int):
+        self.mass_centers = []
+        for i in range(len(self.molecules)):
+            self.mass_centers.append(self.molecules[i].mass_center())
+        mass_centers_fract = []
+        for i in range(len(self.mass_centers)):
+            t = np.transpose(self.mass_centers[i])
+            t = np.matmul(self.cif.rev_transform, t)
+            mass_centers_fract.append(np.transpose(t))
+        for i in range(len(self.molecules)):
+            for x in range(a + 1):
+                for y in range(b + 1):
+                    for z in range(c + 1):
+                        new_molecule = Molecule(self.molecules[i].num_atoms)
+                        copy_molecule(self.molecules[i], new_molecule)
+                        trans = np.transpose(np.array([x, y, z]))
+                        trans = np.matmul(self.cif.transform, trans)
+                        trans = np.transpose(trans)
+                        new_molecule.atom_coord = new_molecule.atom_coord + trans
+                        coincide = False
+                        for i2 in range(len(self.molecules)):
+                            if molecule_coincide(self.molecules[i2], new_molecule):
+                                coincide = True
+                        if not coincide:
+                            self.molecules.append(new_molecule)
+
+    def rebuild(self):
+        checked = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, 1))
+        mol = []
+        flag = False
+        while not flag:
+            for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                if checked[i, 0] == 0:
+                    mol.append(i)
+                    break
+            for i1 in mol:
+                for i2 in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                    if self.bonds[i1, i2] == 1 and i2 not in mol:
+                        mol.append(i2)
+                checked[i1, 0] = 1
+            flag = True
+            for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                if checked[i, 0] != 1:
+                    flag = False
+            new_molecule = Molecule(len(mol))
+            for i in range(len(mol)):
+                m = mol[i] // self.pre_molecules[0].num_atoms
+                n = mol[i] % self.pre_molecules[0].num_atoms
+                new_molecule.atom_label.append(self.pre_molecules[m].atom_label[n])
+                new_molecule.atom_coord[i:i + 1] = self.pre_molecules[m].atom_coord[n:n + 1]
+            self.molecules.append(new_molecule)
+            mol.clear()
+        mc = []
+        mc_fract = []
+        for i in range(len(self.molecules)):
+            mc.append(self.molecules[i].mass_center())
+            mc_t = np.transpose(mc[i])
+            mc_t = np.matmul(self.cif.rev_transform, mc_t)
+            mc_fract.append(np.transpose(mc_t))
+        up_limit = 1.001
+        low_limit = -0.001
+        for_deletion = []
+        new_mol = []
+        for m in self.molecules:
+            n = self.molecules.index(m)
+            if mc_fract[n][0, 0] >= up_limit or mc_fract[n][0, 1] >= up_limit or mc_fract[n][0, 2] >= up_limit or mc_fract[n][0, 0] <= low_limit or mc_fract[n][0, 1] <= low_limit or mc_fract[n][0, 2] <= low_limit:
+                for_deletion.append(n)
+        for i in range(len(self.molecules)):
+            if i not in for_deletion:
+                new_mol.append(self.molecules[i])
+        self.molecules = new_mol
+
+    def to_cartesian(self, mol):
+        for i1 in range(len(mol)):
             for i in range(23):
                 vector = np.zeros((3, 1))
-                vector[0, 0] = self.pre_molecules[i1].atom_coord[i, 0]
-                vector[1, 0] = self.pre_molecules[i1].atom_coord[i, 1]
-                vector[2, 0] = self.pre_molecules[i1].atom_coord[i, 2]
+                vector[0, 0] = mol[i1].atom_coord[i, 0]
+                vector[1, 0] = mol[i1].atom_coord[i, 1]
+                vector[2, 0] = mol[i1].atom_coord[i, 2]
                 vector = np.matmul(self.cif.transform, vector)
-                self.pre_molecules[i1].atom_coord[i, 0] = vector[0, 0]
-                self.pre_molecules[i1].atom_coord[i, 1] = vector[1, 0]
-                self.pre_molecules[i1].atom_coord[i, 2] = vector[2, 0]
+                mol[i1].atom_coord[i, 0] = vector[0, 0]
+                mol[i1].atom_coord[i, 1] = vector[1, 0]
+                mol[i1].atom_coord[i, 2] = vector[2, 0]
 
-    def multiply(self):
-        new1 = self.mass_centers[8:9] + self.cif.c_trans_cart
-        new2 = self.mass_centers[8:9] - self.cif.c_trans_cart
-        new3 = self.mass_centers[9:10] + self.cif.c_trans_cart
-        new4 = self.mass_centers[9:10] - self.cif.c_trans_cart
-        new_mc = np.zeros((14, 3))
-        for n in range(10):
-            new_mc[n:n+1] = self.mass_centers[n:n+1]
-        new_mc[10:11] = new1
-        new_mc[11:12] = new2
-        new_mc[12:13] = new3
-        new_mc[13:14] = new4
-        self.mass_centers = np.zeros((14, 3))
-        self.mass_centers = new_mc
-        np.set_printoptions(precision=4, suppress=True)
+    def print_to_file(self, mol, path):
+        try:
+            file = open(path, "w")
+        except OSError:
+            print("Could not write to file at: ", path)
+            exit(-1)
+        file.write(str(len(mol) * mol[0].num_atoms) + "\n")
+        file.write("xyz\n")
+        for i1 in range(len(mol)):
+            for i2 in range(mol[i1].num_atoms):
+                file.write(mol[i1].atom_label[i2] + " ")
+                file.write(repr(mol[i1].atom_coord[i2, 0]) + " ")
+                file.write(repr(mol[i1].atom_coord[i2, 1]) + " ")
+                file.write(repr(mol[i1].atom_coord[i2, 2]) + "\n")
+        file.close()
 
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
         self.cif = CifFile(path)
         self.pre_molecules.append(self.cif.asym_unit)
-        self.build(self.cif.it_number)
-        self.to_cartesian()
+        self.molecules = []
+        self.build()
+        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+                               self.pre_molecules[0].num_atoms))
+        self.to_cartesian(self.pre_molecules)
+        for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            self.connectivity(i)
         self.rebuild()
-        self.simplify()
-        self.multiply()
+        if a != 0 and b != 0 and c != 0:
+            self.multiply(a, b, c)
+        self.print_to_file(self.molecules, "D:\[work]\cluster.xyz")
+
+
+cl = Cluster(2, 2, 2, "D:\[work]\Kujo\KES48.cif")
