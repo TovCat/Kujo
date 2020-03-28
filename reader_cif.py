@@ -388,5 +388,3 @@ class Cluster:
             self.multiply(a, b, c)
         self.print_to_file(self.molecules, "D:\[work]\cluster.xyz")
 
-
-cl = Cluster(2, 2, 2, "D:\[work]\Kujo\KES48.cif")

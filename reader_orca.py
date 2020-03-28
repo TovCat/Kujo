@@ -7,7 +7,7 @@ def read_orca(path: str):
     contents = file.readlines()
     file.close()
     index = -1
-    mu = np.zeros((3, 1))
+    mu = np.zeros((1, 3))
     for x in contents:
         index = index + 1
         x.strip()
@@ -25,7 +25,7 @@ def read_orca(path: str):
             s = contents[index + 5]
             words = s.split()
             for i in range(3):
-                mu[i, 0] = float(words[i + 5])
+                mu[0, i] = float(words[i + 5])
             break
     orca_molecule = rc.Molecule(len(coord_list))
     for x in coord_list:
