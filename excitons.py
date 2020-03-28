@@ -51,6 +51,11 @@ def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
             H[m, n] = H[n, m]
 
 
+def hamiltonian_diagonal_disorder(H: np.array(), sigma, exp):
+    for n in range(H.shape[0]):
+        H[n, n] = np.random.normal(exp, sigma)
+
+
 def spectra(clust: rc.Cluster, mu, H, bins, sigma):
     plt.xlabel('Energy (cm-1)')
     plt.ylabel('Intensity')
