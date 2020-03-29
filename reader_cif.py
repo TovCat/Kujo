@@ -386,6 +386,10 @@ class Cluster:
         self.rebuild()
         if a != 0 and b != 0 and c != 0:
             self.multiply(a, b, c)
+        else:
+            self.mass_centers = []
+            for i in range(len(self.molecules)):
+                self.mass_centers.append(self.molecules[i].mass_center())
         self.mass_centers_fract = []
         for i in range(len(self.mass_centers)):
             t = np.transpose(self.mass_centers[i])
