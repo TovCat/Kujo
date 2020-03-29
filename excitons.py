@@ -14,12 +14,8 @@ def hamiltonian_dipole(c: rc.Cluster, mu, H):
         for m in range(n + 1, len(c.molecules)):
             v1 = np.zeros((1, 3))
             v2 = np.zeros((1, 3))
-            v1[0, 0] = c.mass_centers[n, 0]
-            v1[0, 1] = c.mass_centers[n, 1]
-            v1[0, 2] = c.mass_centers[n, 2]
-            v2[0, 0] = c.mass_centers[m, 0]
-            v2[0, 1] = c.mass_centers[m, 1]
-            v2[0, 2] = c.mass_centers[m, 2]
+            v1 = c.mass_centers[n]
+            v2 = c.mass_centers[m]
             dv = v1 - v2
             r1 = np.linalg.norm(dv)
             r1 = r1 / bohr3
@@ -36,8 +32,8 @@ def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
     mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
     for n in range(len(c.mass_centers)):
         for m in range(n + 1, len(c.mass_centers)):
-            mass_center_bohr1 = c.mass_centers[n:n + 1] / bohr3
-            mass_center_bohr2 = c.mass_centers[m:m + 1] / bohr3
+            mass_center_bohr1 = c.mass_centers[n] / bohr3
+            mass_center_bohr2 = c.mass_centers[m] / bohr3
             p1_1 = mass_center_bohr1 + mu_trans
             p1_2 = mass_center_bohr1 - mu_trans
             p2_1 = mass_center_bohr2 + mu_trans
@@ -100,7 +96,7 @@ def spectra(clust: rc.Cluster, mu, H, bins, sigma):
         for n in range(len(clust.mass_centers)):
             for m in range(n+1, len(clust.mass_centers)):
                 u_v = np.array([0, math.sin(u[x]), math.cos(u[x])])
-                r = (clust.mass_centers[n:n+1] - clust.mass_centers[m:m+1]) / bohr3
+                r = (clust.mass_centers[n] - clust.mass_centers[m]) / bohr3
                 j = np.inner(u_v, r) * H[n, m] / A
                 D[x] = D[x] + (gamma / (gamma**2 + (E[n] / A - E[m] / A)**2)) * (j**2)
         D[x] = (1/len(clust.mass_centers)) * D[x]
