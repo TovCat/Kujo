@@ -50,16 +50,39 @@ def integrate(cub: Cube, type1: bool, translate: np.array):
     mc = cub.molecule.mass_center()
     dv = cub.volume[0, 0] * cub.volume[1, 0] * cub.volume[2, 0]
     J = 0
-    for x1 in range(cub.steps[0, 0]):
-        for y1 in range(cub.steps[1, 0]):
-            for z1 in range(cub.steps[2, 0]):
-                for x2 in range(cub.steps[0, 0]):
-                    for y2 in range(cub.steps[1, 0]):
-                        for z2 in range(cub.steps[2, 0]):
-                            v1 = np.array([x1 * cub.volume[0, 0], y1 * cub.volume[1, 0], z1 * cub.volume[2, 0]]) - \
-                                 cub.origin
-                            v2 = np.array([x2 * cub.volume[0, 0], y2 * cub.volume[1, 0], z2 * cub.volume[2, 0]]) - \
-                                 cub.origin + translate
-                            r = np.linalg.norm(v1 - v2)
-                            J = J + cub.voxels[x1, y1, z1] * cub.voxels[x2, y2, z2] / r
+    if not type1:
+        for x1 in range(cub.steps[0, 0]):
+            for y1 in range(cub.steps[1, 0]):
+                for z1 in range(cub.steps[2, 0]):
+                    print(np.array([x1, y1, z1]))
+                    for x2 in range(cub.steps[0, 0]):
+                        for y2 in range(cub.steps[1, 0]):
+                            for z2 in range(cub.steps[2, 0]):
+                                v1 = np.array([x1 * cub.volume[0, 0], y1 * cub.volume[1, 0], z1 * cub.volume[2, 0]]) + \
+                                     cub.origin
+                                v2 = np.array([x2 * cub.volume[0, 0], y2 * cub.volume[1, 0], z2 * cub.volume[2, 0]]) + \
+                                     cub.origin + translate
+                                r = np.linalg.norm(v1 - v2)
+                                J = J + cub.voxels[x1, y1, z1] * cub.voxels[x2, y2, z2] / r
+    else:
+        origin2 = cub.origin
+        origin2[0] = origin2[0] - mc[0, 0]
+        origin2[2] = origin2[2] - mc[0, 2]
+        origin2[0] = -1 * origin2[0]
+        origin2[2] = -1 * origin2[2]
+        origin2[0] = origin2[0] + mc[0, 0]
+        origin2[2] = origin2[2] + mc[0, 2]
+        for x1 in range(cub.steps[0, 0]):
+            for y1 in range(cub.steps[1, 0]):
+                for z1 in range(cub.steps[2, 0]):
+                    print(np.array([x1, y1, z1]))
+                    for x2 in range(cub.steps[0, 0]):
+                        for y2 in range(cub.steps[1, 0]):
+                            for z2 in range(cub.steps[2, 0]):
+                                v1 = np.array([x1 * cub.volume[0, 0], y1 * cub.volume[1, 0],
+                                               z1 * cub.volume[2, 0]]) + cub.origin
+                                v2 = np.array([-1 * x2 * cub.volume[0, 0], y2 * cub.volume[1, 0],
+                                               -1 * z2 * cub.volume[2, 0]]) + origin2 + translate
+                                r = np.linalg.norm(v1 - v2)
+                                J = J + cub.voxels[x1, y1, z1] * cub.voxels[x2, y2, z2] / r
     return J
