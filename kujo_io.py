@@ -62,7 +62,17 @@ def print_cluster_readable(cl: reader_cif.Cluster):
             file.write(l + x + y + z + "\n")
         for i1 in range(3):
             for i2 in range(3):
-                file.write(round(repr(cl.molecules[n].inertia_eig_vec[i1, i2]), 6) + " ")
+                file.write(repr(round(cl.molecules[n].inertia_eig_vec[i1, i2]), 6) + " ")
             file.write("\n")
+    file.close()
 
+
+def print_hamiltionain(H):
+    full_path = getcwd()
+    file = open(full_path + "/hamiltonian.kujo", "w")
+    for n in range(H.shape[0]):
+        for m in range(H.shape[1]):
+            file.write(repr(round(H[n,m]), 6) + " ")
+        file.write("\n")
+    file.close()
 
