@@ -1,7 +1,7 @@
 import numpy as np
-import math
 import dictionaries as dict
-import multiprocessing as mp
+import concurrent.futures
+from copy import deepcopy
 
 
 def periodic_to_float(number, count=1):
@@ -73,6 +73,28 @@ class Molecule:
                 r = False
         return r
 
+    def __eq__(self, other):
+        for i in range(self.num_atoms):
+            diff = np.linalg.norm(self.atom_coord[i:i + 1] - other.atom_coord[i:i + 1])
+            if diff < 0.05:
+                return True
+        return False
+
+    def __ne__(self, other):
+        if not self.__eq__(self, other):
+            return True
+        else:
+            return False
+
+    def __add__(self, other):
+        r = Molecule(self.num_atoms + other.num_atoms)
+        for i in range(self.num_atoms):
+            r.atom_label.append(self.atom_label[i])
+            r.atom_coord[i:i+1] = self.atom_coord[i:i+1]
+        for i in range(other.num_atoms):
+            r.atom_label.append(other.atom_label[i])
+            r.atom_coord[i+self.num_atoms:i+1+self.num_atoms] = other.atom_coord[i:i+1]
+
     def mass_center(self):
         r = np.zeros((1, 3))
         mass = 0.0
@@ -105,20 +127,6 @@ class Molecule:
         self.inertia_eig_val, self.inertia_eig_vec = np.linalg.eig(self.inertia_tensor)
         for n in range(3):
             self.inertia_eig_vec[n:n+1] = self.inertia_eig_vec[n:n+1] / np.linalg.norm(self.inertia_eig_vec[n:n+1])
-
-
-def copy_molecule(m1, m2: Molecule):
-    for n in range(m1.num_atoms):
-        m2.atom_label.append(m1.atom_label[n])
-        m2.atom_coord[n:n + 1] = m1.atom_coord[n:n + 1]
-
-
-def molecule_coincide(m1, m2: Molecule):
-    for i in range(m1.num_atoms):
-        diff = np.linalg.norm(m1.atom_coord[i:i + 1] - m2.atom_coord[i:i + 1])
-        if diff < 0.05:
-            return True
-    return False
 
 
 class CifFile:
@@ -381,15 +389,16 @@ class Cluster:
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
         self.to_cartesian(self.pre_molecules)
-        for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-            self.connectivity(i)
+        if __name__ == '__main__':
+            connectivity_lines = list(range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms))
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                jobs = executor.map(self.connectivity, connectivity_lines)
         self.rebuild()
         if a != 0 and b != 0 and c != 0:
             self.multiply(a, b, c)
-        else:
-            self.mass_centers = []
-            for i in range(len(self.molecules)):
-                self.mass_centers.append(self.molecules[i].mass_center())
+        self.mass_centers = []
+        for i in range(len(self.molecules)):
+            self.mass_centers.append(self.molecules[i].mass_center())
         self.mass_centers_fract = []
         for i in range(len(self.mass_centers)):
             t = np.transpose(self.mass_centers[i])
