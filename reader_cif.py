@@ -54,6 +54,7 @@ class Molecule:
         self.num_atoms = n
         self.atom_label = []
         self.atom_coord = np.zeros((n, 3))
+        self.internal_coord = np.zeros((n, 3))
         self.threshold = 0.1
         self.inertia_tensor = np.zeros((3, 3))
         self.inertia_eig_val = np.zeros((3, 1))
@@ -81,7 +82,7 @@ class Molecule:
         return False
 
     def __ne__(self, other):
-        if not self.__eq__(self, other):
+        if not self == other:
             return True
         else:
             return False
@@ -94,6 +95,7 @@ class Molecule:
         for i in range(other.num_atoms):
             r.atom_label.append(other.atom_label[i])
             r.atom_coord[i+self.num_atoms:i+1+self.num_atoms] = other.atom_coord[i:i+1]
+        return r
 
     def mass_center(self):
         r = np.zeros((1, 3))
@@ -245,7 +247,7 @@ class Cluster:
                 for y in range(-3, 3):
                     for z in range(-3, 3):
                         new_molecule = Molecule(self.cif.asym_unit.num_atoms)
-                        copy_molecule(self.cif.asym_unit, new_molecule)
+                        new_molecule = deepcopy(self.cif.asym_unit)
                         new_molecule.atom_coord = new_molecule.atom_coord * mult
                         new_molecule.atom_coord = new_molecule.atom_coord + add
                         new_molecule.atom_coord = new_molecule.atom_coord + x * np.array([1, 0, 0])
@@ -253,7 +255,7 @@ class Cluster:
                         new_molecule.atom_coord = new_molecule.atom_coord + z * np.array([0, 0, 1])
                         coincide = False
                         for i2 in range(len(self.pre_molecules)):
-                            if molecule_coincide(self.pre_molecules[i2], new_molecule):
+                            if self.pre_molecules[i2] == new_molecule:
                                 coincide = True
                         if new_molecule.inside() and not coincide:
                             self.pre_molecules.append(new_molecule)
@@ -294,14 +296,14 @@ class Cluster:
                 for y in range(b + 1):
                     for z in range(c + 1):
                         new_molecule = Molecule(self.molecules[i].num_atoms)
-                        copy_molecule(self.molecules[i], new_molecule)
+                        new_molecule = deepcopy(self.molecules[i])
                         trans = np.transpose(np.array([x, y, z]))
                         trans = np.matmul(self.cif.transform, trans)
                         trans = np.transpose(trans)
                         new_molecule.atom_coord = new_molecule.atom_coord + trans
                         coincide = False
                         for i2 in range(len(self.molecules)):
-                            if molecule_coincide(self.molecules[i2], new_molecule):
+                            if self.molecules[i2] == new_molecule:
                                 coincide = True
                         if not coincide:
                             self.molecules.append(new_molecule)
@@ -363,22 +365,6 @@ class Cluster:
                 mol[i1].atom_coord[i, 0] = vector[0, 0]
                 mol[i1].atom_coord[i, 1] = vector[1, 0]
                 mol[i1].atom_coord[i, 2] = vector[2, 0]
-
-    def print_to_file(self, mol, path):
-        try:
-            file = open(path, "w")
-        except OSError:
-            print("Could not write to file at: ", path)
-            exit(-1)
-        file.write(str(len(mol) * mol[0].num_atoms) + "\n")
-        file.write("xyz\n")
-        for i1 in range(len(mol)):
-            for i2 in range(mol[i1].num_atoms):
-                file.write(mol[i1].atom_label[i2] + " ")
-                file.write(repr(mol[i1].atom_coord[i2, 0]) + " ")
-                file.write(repr(mol[i1].atom_coord[i2, 1]) + " ")
-                file.write(repr(mol[i1].atom_coord[i2, 2]) + "\n")
-        file.close()
 
     def __init__(self, a: int, b: int, c: int, path: str):
         self.pre_molecules = []
