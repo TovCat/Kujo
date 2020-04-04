@@ -1,6 +1,5 @@
 import numpy as np
 import dictionaries as dict
-import concurrent.futures
 from copy import deepcopy
 
 
@@ -371,24 +370,7 @@ class Cluster:
         self.cif = CifFile(path)
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
-        self.build()
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
-        self.to_cartesian(self.pre_molecules)
-        if __name__ == '__main__':
-            connectivity_lines = list(range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms))
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                jobs = executor.map(self.connectivity, connectivity_lines)
-        self.rebuild()
-        if a != 0 and b != 0 and c != 0:
-            self.multiply(a, b, c)
         self.mass_centers = []
-        for i in range(len(self.molecules)):
-            self.mass_centers.append(self.molecules[i].mass_center())
-        self.mass_centers_fract = []
-        for i in range(len(self.mass_centers)):
-            t = np.transpose(self.mass_centers[i])
-            t = np.transpose(np.matmul(self.cif.rev_transform, t))
-            self.mass_centers_fract.append(t)
-        self.print_to_file(self.molecules, "D:\[work]\cluster.xyz")
 
