@@ -9117,3 +9117,5 @@ elementnr = {
     'Uub': 112
 }
 nrelements = dict(zip(elementnr.values(), elementnr.keys()))
+A = 219500  # Hartree to cm-1
+bohr3 = 0.529177210  # bohr in Å
