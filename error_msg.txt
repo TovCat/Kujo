@@ -1,0 +1,1 @@
+Could not open input file at: C:\Users\osing\OneDrive\Документы\GitHub\Kujo/input.txt

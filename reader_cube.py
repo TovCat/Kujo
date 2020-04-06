@@ -42,7 +42,7 @@ class Cube:
                     self.voxels[x, y, z] = sep_contents[n]
         self.dv = self.volume[0, 0] * self.volume[1, 0] * self.volume[2, 0]
 
-    def integrate(self, low_limit, up_limit, translate: np.array, is_bohr = False):
+    def integrate(self, low_limit, up_limit, translate: np.array, is_bohr=False):
         J = 0
         if not is_bohr:
             translate = translate / dic.bohr3

@@ -1,5 +1,11 @@
 from os import getcwd
 import reader_cif
+import reader_cube
+
+
+def read_cube(vars: list):
+    global cube
+    cube = reader_cube.Cube(vars[0])
 
 
 def output_error(text: str, error_code: int):
