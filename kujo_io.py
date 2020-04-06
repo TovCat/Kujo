@@ -24,13 +24,14 @@ def read_input(path: str):
     if len(contents) == 0:
         output_error("Empty input file!", -1)
     for x in contents:
-        words = x.split("=")
-        if len(words) == 1:
-            output_error("Syntax error at the input file: " + x, -1)
-        instructions.append(words[0])
-        options.append(words[1].split(","))
-        for i in range(len(options)):
-            options[i] = options[i].strip
+        if "=" in x:
+            words = x.split("=")
+            instructions.append(words[0].strip())
+            options.append(words[1].split(","))
+            for i in range(len(options)):
+                options[i] = options[i].strip
+        else:
+            instructions.append(words[0].strip())
     return instructions, options
 
 
