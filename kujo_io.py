@@ -29,6 +29,8 @@ def read_input(path: str):
             output_error("Syntax error at the input file: " + x, -1)
         instructions.append(words[0])
         options.append(words[1].split(","))
+        for i in range(len(options)):
+            options[i] = options[i].strip
     return instructions, options
 
 
