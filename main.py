@@ -43,14 +43,22 @@ def options_parse(dsp: dict, opt: list):
 
 
 def read_cube(v: list):
+    options_dispatcher = {
+        "file": ""
+    }
+    options_parse(options_dispatcher, v)
     global cube
-    full_path = getcwd() + f"/{v[0]}"
+    full_path = getcwd() + f"/{options_dispatcher['file']}"
     cube = reader_cube.Cube(full_path)
 
 
 def read_cif(v: list):
+    options_dispatcher = {
+        "file": ""
+    }
+    options_parse(options_dispatcher, v)
     global cif
-    full_path = getcwd() + f"/{v[0]}"
+    full_path = getcwd() + f"/{options_dispatcher['file']}"
     cif = reader_cif.CifFile(full_path)
 
 
