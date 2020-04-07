@@ -15,29 +15,30 @@ cif = None
 
 
 def options_parse(dsp: dict, opt: list):
-    for x in opt:
-        if x[0] in dsp:
-            try:
-                b = bool(x[1])
-                dsp[x[0]] = b
-            except ValueError:
+    for i1 in range(0, len(opt), 2):
+        if opt[i1] in dsp:
+            if opt[i1 + 1].lower() == "true":
+                dsp[opt[0]] = True
+            elif opt[i1 + 1].lower() == "false":
+                dsp[opt[0]] = False
+            else:
                 try:
-                    fl = float(x[1])
-                    dsp[x[0]] = fl
+                    fl = float(opt[i1 + 1])
+                    dsp[opt[0]] = fl
                 except ValueError:
-                    if "[" in x[1] or "]" in x[1]:
-                        x[1].replace("[", "")
-                        x[1].replace("]", "")
-                        words = x[1].split(",")
+                    if "[" in opt[i1 + 1] or "]" in opt[i1 + 1]:
+                        opt[i1 + 1].replace("[", "")
+                        opt[i1 + 1].replace("]", "")
+                        words = opt[i1 + 1].split(",")
                         temp = np.zeros([len(words), 1])
                         try:
                             for i in range(len(words)):
                                 temp[i, 0] = float(words[i])
-                            dsp[x[0]] = temp
+                            dsp[opt[i1]] = temp
                         except ValueError:
                             exit(-1)
                     else:
-                        dsp[x[0]] = x[1]
+                        dsp[opt[i1]] = opt[i1 + 1]
         else:
             exit(-1)
 
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     threads_number = active_count()
     instructions, options = kujo_io.read_input("input.txt")
     for i in range(len(instructions)):
-        result = dispatcher[instructions[i]](options)
+        result = dispatcher[instructions[i]](options[i])
         full_path = getcwd() + "/output.txt"
         if result is not None:
             file = open(full_path, "a+")

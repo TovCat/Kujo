@@ -29,12 +29,15 @@ def read_input(path: str):
             words = x.split(":")
             instructions.append(words[0].strip())
             words[1] = words[1].strip()
-            pre_options = words[1].split(" ")
-            for x in pre_options:
+            pre_options1 = words[1].split(";")
+            for x in pre_options1:
                 x = x.strip()
                 options.append(x.split("="))
         else:
-            instructions.append(words[0].strip())
+            instructions.append(x)
+    for x in range(len(options)):
+        for y in range(len(options[x])):
+            options[x][y] = options[x][y].strip()
     return instructions, options
 
 

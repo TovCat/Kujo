@@ -40,7 +40,7 @@ class Cube:
                 for z in range(self.steps[2, 0]):
                     n = z + y * self.steps[1, 0] + x * self.steps[0, 0]
                     self.voxels[x, y, z] = sep_contents[n]
-        self.dv = self.volume[0, 0] * self.volume[1, 0] * self.volume[2, 0]
+        self.dv = self.volume[0, 0] * self.volume[1, 1] * self.volume[2, 2]
 
     def integrate(self, low_limit, up_limit, translate: np.array, is_bohr=False):
         J = 0
