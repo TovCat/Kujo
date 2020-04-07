@@ -10,12 +10,12 @@ import concurrent.futures
 from threading import active_count
 
 
-def integrate_translated_cube(vars: list):
+def integrate_translated_cube(v: list):
     is_bohr = None
     try:
-        translate = np.array([float(vars[0]), float(vars[1]), float(vars[2])])
-        if len(vars) > 3:
-            is_bohr = bool(vars[3])
+        translate = np.array([float(v[0]), float(v[1]), float(v[2])])
+        if len(v) > 3:
+            is_bohr = bool(v[3])
     except ValueError:
         kujo_io.output_error("Type error at options!", -1)
         pass
@@ -42,11 +42,15 @@ def integrate_translated_cube(vars: list):
 
 
 dispatcher = {
-    "integrate_translated_cube": integrate_translated_cube
+    "integrate_translated_cube": integrate_translated_cube,
     "read_cube": kujo_io.read_cube
+}
+
+dispatcher_output = {
+    "integrate_translated_cube":
 }
 
 threads_number = active_count()
 instructions, options = kujo_io.read_input("input.txt")
 for i in range(len(instructions)):
-    dispatcher[instructions[i]](options)
+    result = dispatcher[instructions[i]](options)

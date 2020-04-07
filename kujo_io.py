@@ -3,9 +3,12 @@ import reader_cif
 import reader_cube
 
 
-def read_cube(vars: list):
+cube = None
+
+
+def read_cube(v: list):
     global cube
-    cube = reader_cube.Cube(vars[0])
+    cube = reader_cube.Cube(v[0])
 
 
 def output_error(text: str, error_code: int):
