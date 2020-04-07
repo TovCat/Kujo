@@ -224,6 +224,9 @@ class CifFile:
         self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
         self.transform[2, 2] = self.cell_c * volume / sing
         self.rev_transform = np.linalg.inv(self.transform)
+        self.vector_a = np.transpose(np.matmul(self.rev_transform, np.transpose([1, 0, 0])))
+        self.vector_b = np.transpose(np.matmul(self.rev_transform, np.transpose([0, 1, 0])))
+        self.vector_c = np.transpose(np.matmul(self.rev_transform, np.transpose([0, 0, 1])))
         # extract xyz eq positions if they're not yet extracted
         if len(self.xyz) == 0:
             if data["_symmetry_space_group_name_Hall"] != "":

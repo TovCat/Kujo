@@ -57,7 +57,7 @@ def read_cif(v: list):
 def integrate_translated_cube(v: list):
     options_dispatcher = {
         "is_bohr": False,
-        "vector": [],
+        "vector": None,
         "vector_cif": "",
         "multiplier": 1.0,
     }
@@ -70,13 +70,23 @@ def integrate_translated_cube(v: list):
         up_limits.append(low_limits[-1] + step)
         low_limits.append(up_limits[-1])
     up_limits.append(np.array([cube.steps[0, 0], cube.steps[1, 0], cube.steps[2, 0]]))
-    if is_bohr is None:
+    if options_dispatcher["vector_cif"] == "a":
+        translate = cif.vector_a * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "b":
+        translate = cif.vector_b * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "c":
+        translate = cif.vector_c * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector"] is not None:
+        translate = options_dispatcher["vector"] * options_dispatcher["multiplier"]
+    else:
+        exit(-1)
+    if options_dispatcher["is_bohr"] is False:
         with concurrent.futures.ProcessPoolExecutor() as executor:
             results = [executor.submit(cube.integrate, low_limits[i], up_limits[i], translate)
                        for i in range(threads_number)]
     else:
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = [executor.submit(cube.integrate, low_limits[i], up_limits[i], translate, is_bohr)
+            results = [executor.submit(cube.integrate, low_limits[i], up_limits[i], translate, True)
                        for i in range(threads_number)]
     r = 0
     for x in results:
