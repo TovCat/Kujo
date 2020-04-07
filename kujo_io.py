@@ -25,11 +25,14 @@ def read_input(path: str):
     if len(contents) == 0:
         output_error("Empty input file!", -1)
     for x in contents:
-        if "=" in x:
-            words = x.split("=")
+        if ":" in x:
+            words = x.split(":")
             instructions.append(words[0].strip())
-            words[1] = words[1].replace(" ", "")
-            options = words[1].split(",")
+            words[1] = words[1].strip()
+            pre_options = words[1].split(" ")
+            for x in pre_options:
+                x = x.strip()
+                options.append(x.split("="))
         else:
             instructions.append(words[0].strip())
     return instructions, options

@@ -14,6 +14,34 @@ cube = None
 cif = None
 
 
+def options_parse(dsp: dict, opt: list):
+    for x in opt:
+        if x[0] in dsp:
+            try:
+                b = bool(x[1])
+                dsp[x[0]] = b
+            except ValueError:
+                try:
+                    fl = float(x[1])
+                    dsp[x[0]] = fl
+                except ValueError:
+                    if "[" in x[1] or "]" in x[1]:
+                        x[1].replace("[", "")
+                        x[1].replace("]", "")
+                        words = x[1].split(",")
+                        temp = np.zeros([len(words), 1])
+                        try:
+                            for i in range(len(words)):
+                                temp[i, 0] = float(words[i])
+                            dsp[x[0]] = temp
+                        except ValueError:
+                            exit(-1)
+                    else:
+                        dsp[x[0]] = x[1]
+        else:
+            exit(-1)
+
+
 def read_cube(v: list):
     global cube
     full_path = getcwd() + f"/{v[0]}"
@@ -27,18 +55,17 @@ def read_cif(v: list):
 
 
 def integrate_translated_cube(v: list):
-    is_bohr = None
-    try:
-        translate = np.array([float(v[0]), float(v[1]), float(v[2])])
-        if len(v) > 3:
-            is_bohr = bool(v[3])
-    except ValueError:
-        kujo_io.output_error("Type error at options!", -1)
-        pass
+    options_dispatcher = {
+        "is_bohr": False,
+        "vector": [],
+        "vector_cif": "",
+        "multiplier": 1.0,
+    }
+    options_parse(options_dispatcher, v)
     low_limits = []
     up_limits = []
     low_limits.append(np.array([0, 0, 0]))
-    step = np.array([сube.steps[0, 0] // threads_number, cube.steps[1, 0], cube.steps[2, 0]])
+    step = np.array([cube.steps[0, 0] // threads_number, cube.steps[1, 0], cube.steps[2, 0]])
     for _ in range(threads_number - 1):
         up_limits.append(low_limits[-1] + step)
         low_limits.append(up_limits[-1])
