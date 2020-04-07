@@ -3,14 +3,6 @@ import reader_cif
 import reader_cube
 
 
-cube = None
-
-
-def read_cube(v: list):
-    global cube
-    cube = reader_cube.Cube(v[0])
-
-
 def output_error(text: str, error_code: int):
     full_path = getcwd()
     file = open(full_path + "/error_msg.txt", "w")
@@ -36,9 +28,8 @@ def read_input(path: str):
         if "=" in x:
             words = x.split("=")
             instructions.append(words[0].strip())
-            options.append(words[1].split(","))
-            for i in range(len(options)):
-                options[i] = options[i].strip
+            words[1] = words[1].replace(" ", "")
+            options = words[1].split(",")
         else:
             instructions.append(words[0].strip())
     return instructions, options
