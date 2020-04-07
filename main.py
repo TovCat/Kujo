@@ -46,11 +46,12 @@ dispatcher = {
     "read_cube": kujo_io.read_cube
 }
 
-dispatcher_output = {
-    "integrate_translated_cube":
-}
-
 threads_number = active_count()
 instructions, options = kujo_io.read_input("input.txt")
 for i in range(len(instructions)):
     result = dispatcher[instructions[i]](options)
+    full_path = getcwd() + "/output.txt"
+    if result is not None:
+        file = open(full_path, "a+")
+        file.write(f"Instruction: '{instructions[i]}' at the line {i} returned: {result}\n")
+        file.close()
