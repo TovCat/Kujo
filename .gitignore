@@ -1,2 +1,7 @@
 /test.py
 /input.txt
+*.txt
+*.cube
+*.cif
+__pycache__/
+.idea/
