@@ -99,7 +99,7 @@ def integrate_translated_cube(v: list):
                        for i in range(threads_number)]
     r = 0
     for x in results:
-        r = r + x
+        r = r + x.result()
     return r
 
 

@@ -46,9 +46,9 @@ class Cube:
         J = 0
         if not is_bohr:
             translate = translate / dic.bohr3
-        for x1 in range(low_limit[0, 0], up_limit[0, 0]):
-            for y1 in range(low_limit[1, 0], up_limit[1, 0]):
-                for z1 in range(low_limit[2, 0], up_limit[2, 0]):
+        for x1 in range(low_limit[0], up_limit[0]):
+            for y1 in range(low_limit[1], up_limit[1]):
+                for z1 in range(low_limit[2], up_limit[2]):
                     for x2 in range(self.steps[0, 0]):
                         for y2 in range(self.steps[1, 0]):
                             for z2 in range(self.steps[2, 0]):
