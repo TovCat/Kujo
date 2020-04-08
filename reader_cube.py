@@ -42,21 +42,21 @@ class Cube:
                     self.voxels[x, y, z] = sep_contents[n]
         self.dv = self.volume[0, 0] * self.volume[1, 1] * self.volume[2, 2]
 
-    def integrate(self, low_limit, up_limit, translate: np.array, is_bohr=False):
+    def integrate(self, l: list):
         J = 0
-        if not is_bohr:
-            translate = translate / dic.bohr3
-        for x1 in range(low_limit[0], up_limit[0]):
-            for y1 in range(low_limit[1], up_limit[1]):
-                for z1 in range(low_limit[2], up_limit[2]):
-                    for x2 in range(self.steps[0, 0]):
-                        for y2 in range(self.steps[1, 0]):
-                            for z2 in range(self.steps[2, 0]):
-                                v1 = np.array([x1 * self.volume[0, 0], y1 * self.volume[1, 0], z1 * self.volume[2, 0]]) + \
-                                     self.origin
-                                v2 = np.array([x2 * self.volume[0, 0], y2 * self.volume[1, 0], z2 * self.volume[2, 0]]) + \
-                                     self.origin + translate
-                                r = np.linalg.norm(v1 - v2)
-                                J = J + (self.voxels[x1, y1, z1] * self.voxels[x2, y2, z2] / r) * self.dv
+        translate = l[0]
+        x1 = l[1]
+        translate = translate / dic.bohr3
+        for y1 in range(self.steps[1, 0]):
+            for z1 in range(self.steps[2, 0]):
+                for x2 in range(self.steps[0, 0]):
+                    for y2 in range(self.steps[1, 0]):
+                        for z2 in range(self.steps[2, 0]):
+                            v1 = np.array([x1 * self.volume[0, 0], y1 * self.volume[1, 0], z1 * self.volume[2, 0]]) + \
+                                 self.origin
+                            v2 = np.array([x2 * self.volume[0, 0], y2 * self.volume[1, 0], z2 * self.volume[2, 0]]) + \
+                                 self.origin + translate
+                            r = np.linalg.norm(v1 - v2)
+                            J = J + (self.voxels[x1, y1, z1] * self.voxels[x2, y2, z2] / r) * self.dv
         J = J / dic.A
         return J

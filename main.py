@@ -1,4 +1,4 @@
-import excitons
+#import excitons
 import reader_cif
 import reader_orca
 import reader_cube
@@ -7,7 +7,6 @@ import linker
 from os import getcwd
 import kujo_io
 import concurrent.futures
-from threading import active_count
 
 
 cube = None
@@ -65,20 +64,11 @@ def read_cif(v: list):
 
 def integrate_translated_cube(v: list):
     options_dispatcher = {
-        "is_bohr": False,
         "vector": None,
         "vector_cif": "",
         "multiplier": 1.0,
     }
     options_parse(options_dispatcher, v)
-    low_limits = []
-    up_limits = []
-    low_limits.append(np.array([0, cube.steps[1, 0], cube.steps[2, 0]]))
-    step = np.array([cube.steps[0, 0] // threads_number, 0, 0])
-    for _ in range(threads_number - 1):
-        up_limits.append(low_limits[-1] + step)
-        low_limits.append(up_limits[-1])
-    up_limits.append(np.array([cube.steps[0, 0], cube.steps[1, 0], cube.steps[2, 0]]))
     if options_dispatcher["vector_cif"] == "a":
         translate = cif.vector_a * options_dispatcher["multiplier"]
     elif options_dispatcher["vector_cif"] == "b":
@@ -89,17 +79,14 @@ def integrate_translated_cube(v: list):
         translate = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
         exit(-1)
-    if options_dispatcher["is_bohr"] is False:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = [executor.submit(cube.integrate, low_limits[i], up_limits[i], translate)
-                       for i in range(threads_number)]
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = [executor.submit(cube.integrate, low_limits[i], up_limits[i], translate, True)
-                       for i in range(threads_number)]
-    r = 0
-    for x in results:
-        r = r + x.result()
+    r = 0.0
+    it = []
+    for i1 in range(cube.steps[0, 0]):
+        it.append([translate, i1])
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = executor.map(cube.integrate, it)
+        for x in results:
+            r = r + x
     return r
 
 
@@ -110,7 +97,6 @@ dispatcher = {
 }
 
 if __name__ == "__main__":
-    threads_number = active_count()
     instructions, options = kujo_io.read_input("input.txt")
     for i in range(len(instructions)):
         result = dispatcher[instructions[i]](options[i])
