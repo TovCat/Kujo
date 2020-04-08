@@ -18,13 +18,13 @@ def options_parse(dsp: dict, opt: list):
     for i1 in range(0, len(opt), 2):
         if opt[i1] in dsp:
             if opt[i1 + 1].lower() == "true":
-                dsp[opt[0]] = True
+                dsp[opt[i1]] = True
             elif opt[i1 + 1].lower() == "false":
-                dsp[opt[0]] = False
+                dsp[opt[i1]] = False
             else:
                 try:
                     fl = float(opt[i1 + 1])
-                    dsp[opt[0]] = fl
+                    dsp[opt[i1]] = fl
                 except ValueError:
                     if "[" in opt[i1 + 1] or "]" in opt[i1 + 1]:
                         opt[i1 + 1].replace("[", "")
@@ -73,8 +73,8 @@ def integrate_translated_cube(v: list):
     options_parse(options_dispatcher, v)
     low_limits = []
     up_limits = []
-    low_limits.append(np.array([0, 0, 0]))
-    step = np.array([cube.steps[0, 0] // threads_number, cube.steps[1, 0], cube.steps[2, 0]])
+    low_limits.append(np.array([0, cube.steps[1, 0], cube.steps[2, 0]]))
+    step = np.array([cube.steps[0, 0] // threads_number, 0, 0])
     for _ in range(threads_number - 1):
         up_limits.append(low_limits[-1] + step)
         low_limits.append(up_limits[-1])

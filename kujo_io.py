@@ -30,9 +30,18 @@ def read_input(path: str):
             instructions.append(words[0].strip())
             words[1] = words[1].strip()
             pre_options1 = words[1].split(";")
+            flag = 0
             for x in pre_options1:
                 x = x.strip()
-                options.append(x.split("="))
+                if len(pre_options1) == 1:
+                    options.append(x.split("="))
+                elif flag == 0:
+                    options.append(x.split("="))
+                    flag = len(options) - 1
+                else:
+                    pre_options2 = x.split("=")
+                    for y in pre_options2:
+                        options[flag].append(y)
         else:
             instructions.append(x)
     for x in range(len(options)):
