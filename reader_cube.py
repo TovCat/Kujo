@@ -58,5 +58,5 @@ class Cube:
                                  self.origin + translate
                             r = np.linalg.norm(v1 - v2)
                             J = J + (self.voxels[x1, y1, z1] * self.voxels[x2, y2, z2] / r) * self.dv
-        J = J / dic.A
+        J = J * dic.A
         return J
