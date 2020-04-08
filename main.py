@@ -5,6 +5,7 @@ import reader_cube
 import numpy as np
 import linker
 from os import getcwd
+from sys import argv
 import kujo_io
 import concurrent.futures
 
@@ -97,11 +98,12 @@ dispatcher = {
 }
 
 if __name__ == "__main__":
-    instructions, options = kujo_io.read_input("input.txt")
+    instructions, options = kujo_io.read_input(argv[1])
+    out = "/" + argv[1].split(".")[0] + ".out"
     for i in range(len(instructions)):
         result = dispatcher[instructions[i]](options[i])
-        full_path = getcwd() + "/output.txt"
+        full_path = getcwd() + out
         if result is not None:
             file = open(full_path, "a+")
-            file.write(f"Instruction: '{instructions[i]}' at the line {i} returned: {result}\n")
+            file.write(f"{instructions[i]} with options {options[i]} returned: {result}\n")
             file.close()
