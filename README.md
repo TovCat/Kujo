@@ -6,15 +6,12 @@ The code still lacks most of the required key features and still in the early st
 
 ### Executing code
 Kujo works only in Python 3 environment - currently code is not Python 2 compartible and probably wouldn't in observable future. In order to execute Kujo just run in your prompt:
-
-python3 main.py <input_file>
-
+* python3 main.py <input_file>
 whereas <input_file> stands for instruction file, telling the code what to calculate.
 
 ### Input file
 Syntax of the input file is pretty much straightforward. Instructions are executed line by line:
-
-<function>: <var1> = ...; <var2> = ...; <var3> = ...; (...)
+* (function): (var1) = ...; (var2) = ...; (var3) = ...; (...)
 
 whereas function tells code what to calculate, colon separates function from variables feeded into the function. Variables must contain variable name, equals sign (=) followed by the value of a variable and semicolon to separate one variable from another. Input file is case sensitive. 
 
