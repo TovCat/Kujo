@@ -17,12 +17,12 @@ whereas function tells code what to calculate, colon separates function from var
 
 ### Available functions
 #### read_cube
-Reads .cube file for further operations. Currently the code is only capable to store one .cube file at a time, so reading another .cube file will erase previous one.
+Reads .cube file for further operations. Currently the code is only capable to store one .cube file at a time, so reading another .cube file will erase the previous one.
 Variables:
 * file = <...> - name of the .cube file to read. Currently only files in the code directory could be read.
 
 #### read_cif
-Reads .cube file for further operations. Currently the code is only capable to store one .cif file at a time, so reading another .cif file will erase previous one.
+Reads .cube file for further operations. Currently the code is only capable to store one .cif file at a time, so reading another .cif file will erase the previous one.
 Variables:
 * file = <...> - name of the .cif file to read. Currently only files in the code directory could be read.
 
@@ -33,4 +33,4 @@ Variables:
 * vector-cif: translation vector from .cif file (obviously, available only if you read .cife file before). Possible values are: "a", "b", "c" standing for a, b, c translation vectors respectively.
 * multiplier: number (floating or integer) to multiply the vector.
 
-Currently, not all functions that coded in Kujo are accessible via input file. You may try to use them by importing Jujo libraries directly, however if considering to do that, I would urge you to reconsider your decision, since not guaranties are given that they would work the way you want them to work.
+Currently, not all functions that coded in Kujo are accessible via input file. You may try to use them by importing Kujo libraries directly, however if considering to do that, I would urge you to reconsider your decision, since not guaranties are given that they would work the way you want them to work.
