@@ -142,7 +142,8 @@ dispatcher = {
     "read_cube": read_cube,
     "read_cif": read_cif,
     "build_cluster": build_cluster,
-
+    "print_cluster_xyz": cluster.print_cluster_xyz,
+    "print_cluster_kujo": cluster.print_cluster_readable,
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff
 }
@@ -151,7 +152,10 @@ if __name__ == "__main__":
     instructions, options = kujo_io.read_input("input.txt")
     out = "/output.out"
     for i in range(len(instructions)):
-        result = dispatcher[instructions[i]](options[i])
+        if len(options) != 0:
+            result = dispatcher[instructions[i]](options[i])
+        else:
+            result = dispatcher[instructions[i]]()
         full_path = getcwd() + out
         if result is not None:
             file = open(full_path, "a+")

@@ -44,45 +44,11 @@ def read_input(path: str):
                         options[flag].append(y)
         else:
             instructions.append(x)
-    for x in range(len(options)):
-        for y in range(len(options[x])):
-            options[x][y] = options[x][y].strip()
+    if len(options) != 0:
+        for x in range(len(options)):
+            for y in range(len(options[x])):
+                options[x][y] = options[x][y].strip()
     return instructions, options
-
-
-def print_cluster_xyz(cl: reader_cif.Cluster):
-    full_path = getcwd()
-    file = open(full_path + "/cluster.xyz", "w")
-    for n in range(len(cl.molecules)):
-        total_number = total_number + cl.molecules[n].num_atoms
-    file.write(repr(total_number) + "\n")
-    file.write("XYZ file of molecular cluster generated in Kujo\n")
-    for n in range(len(cl.molecules)):
-        for m in range(cl.molecules[n].num_atoms):
-            l = cl.molecules[n].atom_label[m]
-            x = repr(round(cl.molecules[n].atom_coord[m, 0], 6))
-            y = repr(round(cl.molecules[n].atom_coord[m, 1], 6))
-            z = repr(round(cl.molecules[n].atom_coord[m, 2], 6))
-            file.write(l + x + y + z + "\n")
-    file.close()
-
-
-def print_cluster_readable(cl: reader_cif.Cluster):
-    full_path = getcwd()
-    file = open(full_path + "/cluster.kujo", "w")
-    for n in range(len(cl.molecules)):
-        file.write(repr(cl.molecules[n].num_atoms) + "\n")
-        for m in range(cl.molecules[n].num_atoms):
-            l = cl.molecules[n].atom_label[m]
-            x = repr(round(cl.molecules[n].atom_coord[m, 0], 6))
-            y = repr(round(cl.molecules[n].atom_coord[m, 1], 6))
-            z = repr(round(cl.molecules[n].atom_coord[m, 2], 6))
-            file.write(l + x + y + z + "\n")
-        for i1 in range(3):
-            for i2 in range(3):
-                file.write(repr(round(cl.molecules[n].inertia_eig_vec[i1, i2]), 6) + " ")
-            file.write("\n")
-    file.close()
 
 
 def print_hamiltonian(H):
