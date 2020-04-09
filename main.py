@@ -1,11 +1,6 @@
-#import excitons
-import reader_cif
-import reader_orca
-import reader_cube
 import numpy as np
-import linker
 from os import getcwd
-from sys import argv
+import sys
 import kujo_io
 import concurrent.futures
 
@@ -46,6 +41,8 @@ def options_parse(dsp: dict, opt: list):
 
 
 def read_cube(v: list):
+    if "reader_cube" not in sys.modules:
+        import reader_cube
     options_dispatcher = {
         "file": ""
     }
@@ -56,6 +53,8 @@ def read_cube(v: list):
 
 
 def read_cif(v: list):
+    if "reader_cif" not in sys.modules:
+        import reader_cif
     options_dispatcher = {
         "file": ""
     }
@@ -66,6 +65,8 @@ def read_cif(v: list):
 
 
 def integrate_translated_cube(v: list):
+    if "reader_cube" not in sys.modules:
+        import reader_cube
     options_dispatcher = {
         "vector": None,
         "vector_cif": "",
