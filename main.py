@@ -12,6 +12,8 @@ import concurrent.futures
 
 cube = None
 cif = None
+hard_cutoff = 0.0
+int_cutoff = 0.0
 
 
 def options_parse(dsp: dict, opt: list):
@@ -91,10 +93,30 @@ def integrate_translated_cube(v: list):
     return r
 
 
+def set_hard_cutoff(v: list):
+    options_dispatcher = {
+        "value": ""
+    }
+    options_parse(options_dispatcher, v)
+    global hard_cutoff
+    hard_cutoff = float(options_dispatcher["value"])
+
+
+def set_int_cutoff(v: list):
+    options_dispatcher = {
+        "value": ""
+    }
+    options_parse(options_dispatcher, v)
+    global int_cutoff
+    int_cutoff = float(options_dispatcher["value"])
+
+
 dispatcher = {
     "integrate_translated_cube": integrate_translated_cube,
     "read_cube": read_cube,
-    "read_cif": read_cif
+    "read_cif": read_cif,
+    "set_hard_cutoff": set_hard_cutoff,
+    "set_int_cutoff": set_int_cutoff
 }
 
 if __name__ == "__main__":
