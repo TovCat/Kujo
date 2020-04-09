@@ -7,6 +7,7 @@ import concurrent.futures
 
 cube = None
 cif = None
+cluster = None
 hard_cutoff = 0.0
 int_cutoff = 0.0
 
@@ -112,10 +113,31 @@ def set_int_cutoff(v: list):
     int_cutoff = float(options_dispatcher["value"])
 
 
+def build_cluster(v: list):
+    if "reader_cif" not in sys.modules:
+        import reader_cif
+    global cluster
+    options_dispatcher = {
+        "a": 0,
+        "b": 0,
+        "c": 0
+    }
+    options_parse(options_dispatcher, v)
+    cluster = reader_cif.Cluster(cif)
+    cluster.build()
+    it = list(range((len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms)))
+    if __name__ == "__main__":
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = executor.map(cluster.connectivity, it)
+    cluster.rebuild()
+    cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
+
+
 dispatcher = {
     "integrate_translated_cube": integrate_translated_cube,
     "read_cube": read_cube,
     "read_cif": read_cif,
+    "build_cluster": build_cluster,
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff
 }

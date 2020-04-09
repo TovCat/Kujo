@@ -368,9 +368,9 @@ class Cluster:
                 mol[i1].atom_coord[i, 1] = vector[1, 0]
                 mol[i1].atom_coord[i, 2] = vector[2, 0]
 
-    def __init__(self, a: int, b: int, c: int, path: str):
+    def __init__(self, cif: CifFile):
         self.pre_molecules = []
-        self.cif = CifFile(path)
+        self.cif = cif
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
