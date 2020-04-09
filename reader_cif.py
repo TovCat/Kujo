@@ -356,17 +356,11 @@ class Cluster:
                 new_mol.append(self.molecules[i])
         self.molecules = new_mol
 
-    def to_cartesian(self, mol):
-        for i1 in range(len(mol)):
-            for i in range(23):
-                vector = np.zeros((3, 1))
-                vector[0, 0] = mol[i1].atom_coord[i, 0]
-                vector[1, 0] = mol[i1].atom_coord[i, 1]
-                vector[2, 0] = mol[i1].atom_coord[i, 2]
-                vector = np.matmul(self.cif.transform, vector)
-                mol[i1].atom_coord[i, 0] = vector[0, 0]
-                mol[i1].atom_coord[i, 1] = vector[1, 0]
-                mol[i1].atom_coord[i, 2] = vector[2, 0]
+    def to_cartesian(self, mol: Molecule):
+        for i in range(mol.num_atoms):
+            vector = mol.atom_coord[i:i + 1]
+            vector = np.transpose(np.matmul(self.cif.transform, np.transpose(vector)))
+            mol.atom_coord[i:i + 1] = vector
 
     def __init__(self, cif: CifFile):
         self.pre_molecules = []

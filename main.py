@@ -126,10 +126,14 @@ def build_cluster(v: list):
     cluster = reader_cif.Cluster(cif)
     cluster.build()
     it = list(range((len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms)))
-    if __name__ == "__main__":
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = executor.map(cluster.connectivity, it)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(cluster.connectivity, it)
     cluster.rebuild()
+    it = []
+    for i in range(len(cluster.pre_molecules)):
+        it.append(cluster.pre_molecules[i])
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(cluster.to_cartesian, it)
     cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
 
 
@@ -138,6 +142,7 @@ dispatcher = {
     "read_cube": read_cube,
     "read_cif": read_cif,
     "build_cluster": build_cluster,
+
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff
 }
