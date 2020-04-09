@@ -32,7 +32,7 @@ _Variables_:
 * file - name of the .cif file to read. Currently only files in the code directory could be read.
 
 #### build_cluster
-Builds molecular cluster via replication of the primitive cell of preiously read .cif file. Obviously, calling thin function before reading .cif file would crush the code
+Builds molecular cluster via replication of the primitive cell of preiously read .cif file. Obviously, calling this function before reading .cif file would crush the code.
 
 _Variables_:
 * a: number of times to replicate primitive cell in the direction of a-axis. 0 stands for no replications at all.
