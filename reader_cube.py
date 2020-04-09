@@ -52,9 +52,9 @@ class Cube:
                 for x2 in range(self.steps[0, 0]):
                     for y2 in range(self.steps[1, 0]):
                         for z2 in range(self.steps[2, 0]):
-                            v1 = np.array([x1 * self.volume[0, 0], y1 * self.volume[1, 0], z1 * self.volume[2, 0]]) + \
+                            v1 = np.array([x1 * self.volume[0, 0], y1 * self.volume[1, 1], z1 * self.volume[2, 2]]) + \
                                  self.origin
-                            v2 = np.array([x2 * self.volume[0, 0], y2 * self.volume[1, 0], z2 * self.volume[2, 0]]) + \
+                            v2 = np.array([x2 * self.volume[0, 0], y2 * self.volume[1, 1], z2 * self.volume[2, 2]]) + \
                                  self.origin + translate
                             r = np.linalg.norm(v1 - v2)
                             J = J + (self.voxels[x1, y1, z1] * self.voxels[x2, y2, z2] / r) * self.dv

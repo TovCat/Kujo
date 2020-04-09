@@ -98,8 +98,8 @@ dispatcher = {
 }
 
 if __name__ == "__main__":
-    instructions, options = kujo_io.read_input(argv[1])
-    out = "/" + argv[1].split(".")[0] + ".out"
+    instructions, options = kujo_io.read_input("input.txt")
+    out = "/output.out"
     for i in range(len(instructions)):
         result = dispatcher[instructions[i]](options[i])
         full_path = getcwd() + out
