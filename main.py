@@ -3,6 +3,8 @@ from os import getcwd
 import sys
 import kujo_io
 import concurrent.futures
+import reader_cube
+import reader_cif
 
 
 cube = None
@@ -42,8 +44,6 @@ def options_parse(dsp: dict, opt: list):
 
 
 def read_cube(v: list):
-    if "reader_cube" not in sys.modules:
-        import reader_cube
     options_dispatcher = {
         "file": ""
     }
@@ -54,8 +54,6 @@ def read_cube(v: list):
 
 
 def read_cif(v: list):
-    if "reader_cif" not in sys.modules:
-        import reader_cif
     options_dispatcher = {
         "file": ""
     }
@@ -66,8 +64,6 @@ def read_cif(v: list):
 
 
 def integrate_translated_cube(v: list):
-    if "reader_cube" not in sys.modules:
-        import reader_cube
     options_dispatcher = {
         "vector": None,
         "vector_cif": "",
@@ -142,8 +138,8 @@ dispatcher = {
     "read_cube": read_cube,
     "read_cif": read_cif,
     "build_cluster": build_cluster,
-    "print_cluster_xyz": cluster.print_cluster_xyz,
-    "print_cluster_kujo": cluster.print_cluster_readable,
+    "print_cluster_xyz": reader_cif.Cluster.print_cluster_xyz,
+    "print_cluster_kujo": reader_cif.Cluster.print_cluster_readable,
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff
 }
