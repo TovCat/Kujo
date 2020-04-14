@@ -5,6 +5,7 @@ import kujo_io
 import concurrent.futures
 import reader_cube
 import reader_cif
+import time
 
 
 cube = None
@@ -145,15 +146,26 @@ dispatcher = {
 }
 
 if __name__ == "__main__":
+    execute_time = time.time()
     instructions, options = kujo_io.read_input("input.txt")
     out = "/output.out"
     for i in range(len(instructions)):
+        str_execute_time = time.time()
         if len(options) != 0:
             result = dispatcher[instructions[i]](options[i])
         else:
             result = dispatcher[instructions[i]]()
         full_path = getcwd() + out
+        finish_time = round((time.time() - str_execute_time)/60, 4)
         if result is not None:
             file = open(full_path, "a+")
-            file.write(f"{instructions[i]} with options {options[i]} returned: {result}\n")
+            file.write(f"{instructions[i]} with options {options[i]} returned ({finish_time} mins): {result}\n")
             file.close()
+        else:
+            file = open(full_path, "a+")
+            file.write(f"Executed {instructions[i]} with options {options[i]}")
+            file.close()
+    overall_time = round((time.time() - execute_time)/60, 4)
+    file = open(full_path, "a+")
+    file.write(f"Finished after {overall_time} minutes")
+    file.close()
