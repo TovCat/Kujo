@@ -38,7 +38,7 @@ class Cube:
         for x in range(self.steps[0, 0]):
             for y in range(self.steps[1, 0]):
                 for z in range(self.steps[2, 0]):
-                    n = z + y * self.steps[1, 0] + x * self.steps[0, 0]
+                    n = z + y * self.steps[2, 0] + x * self.steps[1, 0] * self.steps[2, 0]
                     self.voxels[x, y, z] = sep_contents[n]
         self.dv = self.volume[0, 0] * self.volume[1, 1] * self.volume[2, 2]
 
