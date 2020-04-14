@@ -8999,11 +8999,7 @@ SymOpsHall = {
                ['x+1/2', 'y+1/2', 'z']]
 }
 elementnr = {
-    'Em': 0,  # empty site
-    'Vc': 0,  # empty site
-    'Va': 0,  # empty site
     'H': 1,
-    'D': 1,
     'He': 2,
     'Li': 3,
     'Be': 4,
