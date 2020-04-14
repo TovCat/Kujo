@@ -7,7 +7,6 @@ import reader_cube
 import reader_cif
 import time
 
-
 cube = None
 cif = None
 cluster = None
@@ -148,7 +147,9 @@ dispatcher = {
 if __name__ == "__main__":
     execute_time = time.time()
     instructions, options = kujo_io.read_input("input.txt")
-    out = "/output.out"
+    suffix = f"""-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}\
+    -{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"""
+    out = f"/output{suffix}.out"
     for i in range(len(instructions)):
         str_execute_time = time.time()
         if len(options) != 0:
@@ -156,16 +157,16 @@ if __name__ == "__main__":
         else:
             result = dispatcher[instructions[i]]()
         full_path = getcwd() + out
-        finish_time = round((time.time() - str_execute_time)/60, 4)
+        finish_time = round((time.time() - str_execute_time) / 60, 4)
         if result is not None:
             file = open(full_path, "a+")
             file.write(f"{instructions[i]} with options {options[i]} returned ({finish_time} mins): {result}\n")
             file.close()
         else:
             file = open(full_path, "a+")
-            file.write(f"Executed {instructions[i]} with options {options[i]}")
+            file.write(f"Executed {instructions[i]} with options {options[i]}\n")
             file.close()
-    overall_time = round((time.time() - execute_time)/60, 4)
+    overall_time = round((time.time() - execute_time) / 60, 4)
     file = open(full_path, "a+")
     file.write(f"Finished after {overall_time} minutes")
     file.close()
