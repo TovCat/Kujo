@@ -147,8 +147,7 @@ dispatcher = {
 if __name__ == "__main__":
     execute_time = time.time()
     instructions, options = kujo_io.read_input("input.txt")
-    suffix = f"""-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}\
-    -{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"""
+    suffix = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
     out = f"/output{suffix}.out"
     for i in range(len(instructions)):
         str_execute_time = time.time()

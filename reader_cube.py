@@ -57,6 +57,6 @@ class Cube:
                             v2 = np.array([x2 * self.volume[0, 0], y2 * self.volume[1, 1], z2 * self.volume[2, 2]]) + \
                                  self.origin + translate
                             r = np.linalg.norm(v1 - v2)
-                            J = J + (self.voxels[x1, y1, z1] * self.voxels[x2, y2, z2] / r) * self.dv
+                            J = J + ((self.voxels[x1, y1, z1] * self.dv) * (self.voxels[x2, y2, z2] * self.dv)) / r
         J = J * dic.A
         return J
