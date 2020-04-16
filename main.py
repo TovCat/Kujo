@@ -10,6 +10,7 @@ import time
 cube = None
 cif = None
 cluster = None
+max_w = None
 hard_cutoff = 0.0
 int_cutoff = 0.0
 
@@ -84,10 +85,16 @@ def integrate_translated_cube(v: list):
     it = []
     for i1 in range(cube.steps[0, 0]):
         it.append([translate, i1])
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        results = executor.map(cube.integrate, it)
-        for x in results:
-            r = r + x
+    if max_w is not None:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+            results = executor.map(cube.integrate, it)
+            for x in results:
+                r = r + x
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = executor.map(cube.integrate, it)
+            for x in results:
+                r = r + x
     return r
 
 
@@ -107,6 +114,15 @@ def set_int_cutoff(v: list):
     options_parse(options_dispatcher, v)
     global int_cutoff
     int_cutoff = float(options_dispatcher["value"])
+
+
+def set_max_workers(v: list):
+    options_dispatcher = {
+        "value": ""
+    }
+    options_parse(options_dispatcher, v)
+    global max_w
+    max_w = int(options_dispatcher["value"])
 
 
 def build_cluster(v: list):
@@ -141,7 +157,8 @@ dispatcher = {
     "print_cluster_xyz": reader_cif.Cluster.print_cluster_xyz,
     "print_cluster_kujo": reader_cif.Cluster.print_cluster_readable,
     "set_hard_cutoff": set_hard_cutoff,
-    "set_int_cutoff": set_int_cutoff
+    "set_int_cutoff": set_int_cutoff,
+    "set_max_workers": set_max_workers
 }
 
 if __name__ == "__main__":
