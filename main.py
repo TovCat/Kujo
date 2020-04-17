@@ -6,6 +6,7 @@ import concurrent.futures
 import reader_cube
 import reader_cif
 import time
+import excitons
 
 cube = None
 cif = None
@@ -64,7 +65,7 @@ def read_cif(v: list):
     cif = reader_cif.CifFile(full_path)
 
 
-def integrate_translated_cube(v: list):
+def coupling_td_integration(v: list):
     options_dispatcher = {
         "vector": None,
         "vector_cif": "",
@@ -149,8 +150,34 @@ def build_cluster(v: list):
     cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
 
 
+def coupling_extended_dipole_wrapper(v: list):
+    options_dispatcher = {
+        "vector": None,
+        "vector_cif": "",
+        "multiplier": 1.0,
+        "d": 0.0,
+        "mu_x": 0.0,
+        "mu_y": 0.0,
+        "mu_z": 0.0
+    }
+    options_parse(options_dispatcher, v)
+    if options_dispatcher["vector_cif"] == "a":
+        t = cif.vector_a * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "b":
+        t = cif.vector_b * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "c":
+        t = cif.vector_c * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector"] is not None:
+        t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
+    else:
+        exit(-1)
+    dipole = np.array([float(options_dispatcher["mu_x"]), float(options_dispatcher["mu_y"]),
+                       float(options_dispatcher["mu_z"])])
+    return excitons.coupling_extended_dipole(options_dispatcher["d"], dipole, t)
+
 dispatcher = {
-    "integrate_translated_cube": integrate_translated_cube,
+    "coupling_td_integration": coupling_td_integration,
+    "coupling_extended_dipole": coupling_extended_dipole_wrapper,
     "read_cube": read_cube,
     "read_cif": read_cif,
     "build_cluster": build_cluster,

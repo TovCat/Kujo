@@ -27,24 +27,20 @@ def hamiltonian_dipole(c: rc.Cluster, mu, H):
     print("   Done: %s" % (time.time() - h_time))
 
 
-def hamiltonian_extended_dipole(c: rc.Cluster, d, mu, H):
+def coupling_extended_dipole(d, mu, translation):
+    d = d / bohr3
     q = np.linalg.norm(mu) / (2 * d)
     mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
-    for n in range(len(c.mass_centers)):
-        for m in range(n + 1, len(c.mass_centers)):
-            mass_center_bohr1 = c.mass_centers[n] / bohr3
-            mass_center_bohr2 = c.mass_centers[m] / bohr3
-            p1_1 = mass_center_bohr1 + mu_trans
-            p1_2 = mass_center_bohr1 - mu_trans
-            p2_1 = mass_center_bohr2 + mu_trans
-            p2_2 = mass_center_bohr2 - mu_trans
-            r_pp = np.linalg.norm(p1_1 - p2_1)
-            r_pm = np.linalg.norm(p1_1 - p2_2)
-            r_mp = np.linalg.norm(p1_2 - p2_1)
-            r_mm = np.linalg.norm(p1_2 - p2_2)
-            J = (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm))
-            H[n, m] = J * A
-            H[m, n] = H[n, m]
+    mass_center_bohr = translation / bohr3
+    p1_1 = mu_trans
+    p1_2 = -1 * mu_trans
+    p2_1 = mass_center_bohr + mu_trans
+    p2_2 = mass_center_bohr - mu_trans
+    r_pp = np.linalg.norm(p1_1 - p2_1)
+    r_pm = np.linalg.norm(p1_1 - p2_2)
+    r_mp = np.linalg.norm(p1_2 - p2_1)
+    r_mm = np.linalg.norm(p1_2 - p2_2)
+    return (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm))
 
 
 def hamiltonian_diagonal_disorder(H, sigma, exp):
