@@ -40,7 +40,7 @@ def coupling_extended_dipole(d, mu, translation):
     r_pm = np.linalg.norm(p1_1 - p2_2)
     r_mp = np.linalg.norm(p1_2 - p2_1)
     r_mm = np.linalg.norm(p1_2 - p2_2)
-    return (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm))
+    return (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm)) * A
 
 
 def hamiltonian_diagonal_disorder(H, sigma, exp):
