@@ -30,7 +30,7 @@ def hamiltonian_dipole(c: rc.Cluster, mu, H):
 def coupling_extended_dipole(d, mu, translation):
     d = d / bohr3
     q = np.linalg.norm(mu) / (2 * d)
-    mu_trans = mu * math.sqrt(d / np.linalg.norm(mu))
+    mu_trans = mu * (d / np.linalg.norm(mu))
     mass_center_bohr = translation / bohr3
     p1_1 = mu_trans
     p1_2 = -1 * mu_trans
