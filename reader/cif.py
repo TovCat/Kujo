@@ -23,6 +23,13 @@ def transform(m: np.array, trans: np.array):
         m[i:i + 1] = np.matmul(m[i:i + 1], trans)
 
 
+def rotation_matrix(alpha, beta, gamma):
+    x_rotation = np.array([[1, 0, 0], [0, np.cos(alpha), -1 * np.sin(alpha)], [0, np.sin(alpha), np.cos(alpha)]])
+    y_rotation = np.array([[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-1 * np.sin(beta), 0, np.cos(beta)]])
+    x_rotation = np.array([[np.cos(gamma), -1 * np.sin(gamma), 0], [np.sin(gamma), np.cos(gamma), 0], [0, 0, 1]])
+    return x_rotation, y_rotation, x_rotation
+
+
 def parse_eq_xyz(eq: list):
     l = eq.copy()
     mult = np.zeros((1, 3))
@@ -98,10 +105,23 @@ class Molecule:
         r = np.zeros((1, 3))
         mass = 0.0
         for i in range(self.num_atoms):
-            r = r + self.atom_coord[i:i + 1] * dict.element_weight[self.atom_label[i]]
-            mass = mass + dict.element_weight[self.atom_label[i]]
+            r = r + self.atom_coord[i:i + 1] * utility.dictionaries.element_weight[self.atom_label[i]]
+            mass = mass + utility.dictionaries.element_weight[self.atom_label[i]]
         r = r / mass
         return r
+
+
+def match_rotation(original_mol, mol_to_match: Molecule):
+    for x in range(round(1000 * np.pi), 1000):
+        for y in range(round(1000 * np.pi), 1000):
+            for z in range(round(1000 * np.pi), 1000):
+                rotated_mol = original_mol
+                x_rot, y_rot, z_rot = rotation_matrix(x, y, z)
+                transform(rotated_mol.atom_coord, x_rot)
+                transform(rotated_mol.atom_coord, y_rot)
+                transform(rotated_mol.atom_coord, z_rot)
+                if rotated_mol == mol_to_match:
+                    return x, y, z
 
 
 class CifFile:
