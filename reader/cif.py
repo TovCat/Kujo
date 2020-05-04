@@ -1,29 +1,36 @@
 from os import getcwd
 import numpy as np
-import utility
+import utility.dictionaries
 from copy import deepcopy
 
 
 def periodic_to_float(number, count=1):
+    """
+    Round periodic number to regular float with accuracy count (1 by default).
+    """
     if number.find("(") == -1:
         return float(number)
     else:
         temp = float(number[0:number.find("(")])
-        i = 0
-        while i < count:
+        for i in range(count):
             l1 = len(number[number.find(".") + 1: number.find("(")])
             l2 = len(number[number.find("(") + 1: number.find(")")])
-            temp = temp + float(number[number.find("(") + 1:number.find(")")]) * 10 ** (-1 * (l1 + (i + 1) * l2))
-            i = i + 1
+            temp += float(number[number.find("(") + 1:number.find(")")]) * 10 ** (-1 * (l1 + (i + 1) * l2))
         return temp
 
 
 def transform(m: np.array, trans: np.array):
+    """
+    Perform coordinate transformation.
+    """
     for i in range(m.shape[0]):
         m[i:i + 1] = np.matmul(m[i:i + 1], trans)
 
 
 def rotation_matrix(alpha, beta, gamma):
+    """
+    Generate rotation matrix for alpha, beta and gamma angles (x, y, z).
+    """
     x_rotation = np.array([[1, 0, 0], [0, np.cos(alpha), -1 * np.sin(alpha)], [0, np.sin(alpha), np.cos(alpha)]])
     y_rotation = np.array([[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-1 * np.sin(beta), 0, np.cos(beta)]])
     x_rotation = np.array([[np.cos(gamma), -1 * np.sin(gamma), 0], [np.sin(gamma), np.cos(gamma), 0], [0, 0, 1]])
