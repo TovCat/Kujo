@@ -286,7 +286,16 @@ class Cluster:
                 self.range_matrix_mc[m, n] = self.range_matrix_mc[m, n]
 
     def range_matrix_periodic(self):
-
+        self.range_matrix_periodic = np.zeros((len(self.molecules), len(self.molecules)))
+        for n in range(len(self.molecules)):
+            for m in range(n + 1, len(self.molecules)):
+                distances = []
+                for x in range(-1, 2):
+                    for y in range(3):
+                        r = self.mass_centers[n] + self.out_translation[y]
+                        distances.append(np.linalg.norm(self.mass_centers[n] - r))
+                self.range_matrix_periodic[n, m] = min(distances)
+                self.range_matrix_periodic[m, n] = self.range_matrix_periodic[n, m]
 
     def multiply(self, a: int, b: int, c: int):
         self.mass_centers = []
@@ -407,7 +416,5 @@ class Cluster:
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
         self.mass_centers = []
-        self.a_length = a
-        self.b_length = b
-        self.c_length = c
+        self.out_translation = [(a + 1) * self.cif.vector_a, (b + 1) * self.cif.vector_b, (c + 1) * self.cif.vector_c]
 
