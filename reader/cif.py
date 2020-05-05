@@ -251,11 +251,9 @@ class Cluster:
                     for z in range(-3, 3):
                         new_molecule = Molecule(self.cif.asym_unit.num_atoms)
                         new_molecule = deepcopy(self.cif.asym_unit)
-                        new_molecule.atom_coord = new_molecule.atom_coord * mult
-                        new_molecule.atom_coord = new_molecule.atom_coord + add
-                        new_molecule.atom_coord = new_molecule.atom_coord + x * np.array([1, 0, 0])
-                        new_molecule.atom_coord = new_molecule.atom_coord + y * np.array([0, 1, 0])
-                        new_molecule.atom_coord = new_molecule.atom_coord + z * np.array([0, 0, 1])
+                        new_molecule.atom_coord *= mult
+                        new_molecule.atom_coord += add
+                        new_molecule.atom_coord += np.array([x, y, z])
                         coincide = False
                         for i2 in range(len(self.pre_molecules)):
                             if self.pre_molecules[i2] == new_molecule:
@@ -286,6 +284,9 @@ class Cluster:
             for m in range(n + 1, len(self.molecules)):
                 self.range_matrix_mc[n, m] = np.linalg.norm(self.mass_centers[n] - self.mass_centers[m])
                 self.range_matrix_mc[m, n] = self.range_matrix_mc[m, n]
+
+    def range_matrix_periodic(self):
+
 
     def multiply(self, a: int, b: int, c: int):
         self.mass_centers = []
@@ -398,7 +399,7 @@ class Cluster:
                 file.write("\n")
         file.close()
 
-    def __init__(self, cif: CifFile):
+    def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []
         self.cif = cif
         self.pre_molecules.append(self.cif.asym_unit)
@@ -406,4 +407,7 @@ class Cluster:
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
         self.mass_centers = []
+        self.a_length = a
+        self.b_length = b
+        self.c_length = c
 
