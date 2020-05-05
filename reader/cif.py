@@ -272,18 +272,20 @@ class Cluster:
             v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
             v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
             dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
-            limit_dist = dict.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
-                         dict.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+            limit_dist = utility.dictionaries.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                         utility.dictionaries.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
             if dist <= limit_dist:
                 self.bonds[line, k] = 1
                 self.bonds[k, line] = 1
 
-    def simplify(self):
-        self.mass_centers = np.zeros((len(self.molecules), 3))
+    def range_matrix_mass_centers(self):
         for i in range(len(self.molecules)):
-            v = self.molecules[i].mass_center()
-            self.mass_centers[i:i + 1] = self.molecules[i].mass_center()
-            self.molecules[i].inertia()
+            self.mass_centers.append(self.molecules.mass_center())
+        self.range_matrix_mc = np.zeros((len(self.molecules), len(self.molecules)))
+        for n in range(len(self.molecules)):
+            for m in range(n + 1, len(self.molecules)):
+                self.range_matrix_mc[n, m] = np.linalg.norm(self.mass_centers[n] - self.mass_centers[m])
+                self.range_matrix_mc[m, n] = self.range_matrix_mc[m, n]
 
     def multiply(self, a: int, b: int, c: int):
         self.mass_centers = []
