@@ -179,7 +179,7 @@ class CifFile:
                 loop_list.append(s)
                 index_loop = index_loop + 1
                 s = contents[index_loop].strip()
-            if loop_list[0] == "_symmetry_equiv_pos_as_xyz":
+            if loop_list[0] == "_symmetry_equiv_pos_as_xyz" or "_space_group_symop_operation_xyz":
                 for i in range(1, len(loop_list)):
                     self.xyz.append(loop_list[i].replace("'", "").split(", "))
             positions = {
@@ -235,11 +235,11 @@ class CifFile:
         # extract xyz eq positions if they're not yet extracted
         if len(self.xyz) == 0:
             if data["_symmetry_space_group_name_Hall"] != "":
-                self.xyz = dict.SymOpsHall[data["_symmetry_space_group_name_Hall"]]
+                self.xyz = utility.dictionaries.SymOpsHall[data["_symmetry_space_group_name_Hall"]]
             elif data["_symmetry_space_group_name_H-M"] != "":
                 data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace("(", "")
                 data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace(")", "")
-                self.xyz = dict.SymOpsHall[dict.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
+                self.xyz = utility.dictionaries.SymOpsHall[utility.dictionaries.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
             else:
                 print("No symmetry detected in CIF file!")
                 exit(-1)
