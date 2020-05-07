@@ -1,15 +1,29 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import time
-import reader_cif as rc
-import math
+import reader.cif
 
 A = 219500  # Hartree to cm-1
-bohr3 = 0.529177210  # bohr in Å
+bohr = 0.529177210  # bohr in Å
+
+
+def align_dipole(angles: np.array, mu: np.array):
+    x_r, y_r, z_r = reader.cif.rotation_matrix(angles[0], angles[1], angles[2])
+    temp = np.transpose(np.matmul(np.tramspose(mu)), x_r)
+    temp = np.transpose(np.matmul(np.tramspose(temp)), y_r)
+    temp = np.transpose(np.matmul(np.tramspose(temp)), z_r)
+    return temp
+
+
+def coupling_dipole(angles1: np.array, angles2: np.array, mu: np.array, distance, r):
+    mu_1 = align_dipole(angles1, mu)
+    mu_2 = align_dipole(angles2, mu)
+    r1 = distance / bohr
+    r3 = r1 ** 3
+    r5 = r1 ** 5
+    J = np.inner(mu_1, mu_2) / r3 + (np.inner(mu, r) * np.inner(r, mu)) / r5
+    return J / A
+
 
 def hamiltonian_dipole(c: rc.Cluster, mu, H):
-    print("Calculate Hamiltonian")
-    h_time = time.time()
     for n in range(len(c.molecules)):
         for m in range(n + 1, len(c.molecules)):
             v1 = np.zeros((1, 3))
@@ -24,7 +38,6 @@ def hamiltonian_dipole(c: rc.Cluster, mu, H):
             J = np.inner(mu, mu) / r3 + (np.inner(mu, dv) * np.inner(dv, mu)) / r5
             H[n, m] = J * A
             H[m, n] = H[n, m]
-    print("   Done: %s" % (time.time() - h_time))
 
 
 def coupling_extended_dipole(d, mu, translation):
@@ -91,7 +104,7 @@ def spectra(clust: rc.Cluster, mu, H, bins, sigma):
     for x in range(bins):
         for n in range(len(clust.mass_centers)):
             for m in range(n+1, len(clust.mass_centers)):
-                u_v = np.array([0, math.sin(u[x]), math.cos(u[x])])
+                u_v = np.array([0, np.sin(u[x]), np.cos(u[x])])
                 r = (clust.mass_centers[n] - clust.mass_centers[m]) / bohr3
                 j = np.inner(u_v, r) * H[n, m] / A
                 D[x] = D[x] + (gamma / (gamma**2 + (E[n] / A - E[m] / A)**2)) * (j**2)
