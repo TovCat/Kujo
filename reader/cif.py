@@ -413,6 +413,23 @@ class Cluster:
         for x in self.molecules:
             x.alpha, x.beta, x.gamma = match_rotation(self.molecules[0], x)
 
+    def build_1d(self, axis, n):
+        """
+        Builds 1d cluster
+        """
+        mols = []
+        mols.append(self.molecules[0])
+        if axis == "a":
+            translate = self.cif.vector_a
+        elif axis == "b":
+            translate = self.cif.vector_b
+        elif axis == "c":
+            translate = self.cif.vector_c
+        for i in range(n):
+            temp = deepcopy(mols[n])
+            temp.atom_coord += translate
+            mols.append(temp)
+
     def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []
         self.cif = cif
