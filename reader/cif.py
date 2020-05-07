@@ -70,6 +70,10 @@ class Molecule:
         self.atom_coord = np.zeros((n, 3))
         self.internal_coord = np.zeros((n, 3))
         self.threshold = 0.1
+        # rotation angles with respect the first cluster molecule
+        self.alpha = 0.0
+        self.beta = 0.0
+        self.gamma = 0.0
 
     def inside(self):
         a1 = 1 + self.threshold
@@ -407,6 +411,10 @@ class Cluster:
                     file.write(repr(round(self.molecules[n].inertia_eig_vec[i1, i2]), 6) + " ")
                 file.write("\n")
         file.close()
+
+    def measure_rotations(self):
+        for x in self.molecules:
+            x.alpha, x.beta, x.gamma = match_rotation(self.molecules[0], x)
 
     def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []
