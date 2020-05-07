@@ -33,30 +33,30 @@ def rotation_matrix(alpha, beta, gamma):
     """
     x_rotation = np.array([[1, 0, 0], [0, np.cos(alpha), -1 * np.sin(alpha)], [0, np.sin(alpha), np.cos(alpha)]])
     y_rotation = np.array([[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-1 * np.sin(beta), 0, np.cos(beta)]])
-    x_rotation = np.array([[np.cos(gamma), -1 * np.sin(gamma), 0], [np.sin(gamma), np.cos(gamma), 0], [0, 0, 1]])
-    return x_rotation, y_rotation, x_rotation
+    z_rotation = np.array([[np.cos(gamma), -1 * np.sin(gamma), 0], [np.sin(gamma), np.cos(gamma), 0], [0, 0, 1]])
+    return x_rotation, y_rotation, z_rotation
 
 
 def parse_eq_xyz(eq: list):
-    l = eq.copy()
+    eq_copy = eq.copy()
     mult = np.zeros((1, 3))
     add = np.zeros((1, 3))
-    for i in range(len(l)):
-        if l[i][0] == "-":
+    for i in range(len(eq_copy)):
+        if eq_copy[i][0] == "-":
             mult[0, i] = -1
-            l[i] = l[i][2:]
+            eq_copy[i] = eq_copy[i][2:]
         else:
             mult[0, i] = 1
-            l[i] = l[i][1:]
-    for i in range(len(l)):
-        if l[i] != "" and l[i][0] == "+":
-            l[i] = l[i][1:]
-            w = l[i].split("/")
+            eq_copy[i] = eq_copy[i][1:]
+    for i in range(len(eq_copy)):
+        if eq_copy[i] != "" and eq_copy[i][0] == "+":
+            eq_copy[i] = eq_copy[i][1:]
+            w = eq_copy[i].split("/")
             number = int(w[0]) / int(w[1])
             add[0, i] = number
-        elif l[i] != "" and l[i][0] == "-":
-            l[i] = l[i][1:]
-            w = l[i].split("/")
+        elif eq_copy[i] != "" and eq_copy[i][0] == "-":
+            eq_copy[i] = eq_copy[i][1:]
+            w = eq_copy[i].split("/")
             number = int(w[0]) / int(w[1])
             add[0, i] = -1 * number
     return mult, add
@@ -106,10 +106,10 @@ class Molecule:
         r = Molecule(self.num_atoms + other.num_atoms)
         for i in range(self.num_atoms):
             r.atom_label.append(self.atom_label[i])
-            r.atom_coord[i:i+1] = self.atom_coord[i:i+1]
+            r.atom_coord[i:i + 1] = self.atom_coord[i:i + 1]
         for i in range(other.num_atoms):
             r.atom_label.append(other.atom_label[i])
-            r.atom_coord[i+self.num_atoms:i+1+self.num_atoms] = other.atom_coord[i:i+1]
+            r.atom_coord[i + self.num_atoms:i + 1 + self.num_atoms] = other.atom_coord[i:i + 1]
         return r
 
     def mass_center(self):
@@ -139,6 +139,7 @@ class CifFile:
 
     def __init__(self, path=""):
         # trying to open CIF file and read its contents
+        contents = []
         try:
             file = open(path, "r")
             contents = file.readlines()
@@ -219,15 +220,10 @@ class CifFile:
         cosb = np.cos(np.deg2rad(self.cell_beta))
         cosg = np.cos(np.deg2rad(self.cell_gamma))
         sing = np.sin(np.deg2rad(self.cell_gamma))
-        volume = 1.0 - cosa ** 2.0 - cosb ** 2.0 - cosg ** 2.0 + 2.0 * cosa * cosb * cosg
-        volume = np.sqrt(volume)
-        self.transform = np.zeros((3, 3))
-        self.transform[0, 0] = self.cell_a
-        self.transform[0, 1] = self.cell_b * cosg
-        self.transform[0, 2] = self.cell_c * cosb
-        self.transform[1, 1] = self.cell_b * sing
-        self.transform[1, 2] = self.cell_c * (cosa - cosb * cosg) / sing
-        self.transform[2, 2] = self.cell_c * volume / sing
+        volume = np.sqrt(1.0 - cosa ** 2.0 - cosb ** 2.0 - cosg ** 2.0 + 2.0 * cosa * cosb * cosg)
+        self.transform = np.array([[self.cell_a, self.cell_b * cosg, self.cell_c * cosb],
+                                   [0, self.cell_b * sing, self.cell_c * (cosa - cosb * cosg) / sing],
+                                   [0, 0, self.cell_c * volume / sing]])
         self.rev_transform = np.linalg.inv(self.transform)
         self.vector_a = np.transpose(np.matmul(self.transform, np.transpose([1, 0, 0])))
         self.vector_b = np.transpose(np.matmul(self.transform, np.transpose([0, 1, 0])))
@@ -239,7 +235,8 @@ class CifFile:
             elif data["_symmetry_space_group_name_H-M"] != "":
                 data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace("(", "")
                 data["_symmetry_space_group_name_H-M"] = data["_symmetry_space_group_name_H-M"].replace(")", "")
-                self.xyz = utility.dictionaries.SymOpsHall[utility.dictionaries.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
+                self.xyz = utility.dictionaries.SymOpsHall[
+                    utility.dictionaries.HM2Hall[data["_symmetry_space_group_name_H-M"]]]
             else:
                 print("No symmetry detected in CIF file!")
                 exit(-1)
@@ -253,7 +250,6 @@ class Cluster:
             for x in range(-3, 3):
                 for y in range(-3, 3):
                     for z in range(-3, 3):
-                        new_molecule = Molecule(self.cif.asym_unit.num_atoms)
                         new_molecule = deepcopy(self.cif.asym_unit)
                         new_molecule.atom_coord *= mult
                         new_molecule.atom_coord += add
@@ -266,7 +262,7 @@ class Cluster:
                             self.pre_molecules.append(new_molecule)
 
     def connectivity(self, line: int):
-        for k in range(line+1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+        for k in range(line + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
             m1 = line // self.pre_molecules[0].num_atoms
             m1n = line % self.pre_molecules[0].num_atoms
             m2 = k // self.pre_molecules[0].num_atoms
@@ -314,7 +310,6 @@ class Cluster:
             for x in range(a + 1):
                 for y in range(b + 1):
                     for z in range(c + 1):
-                        new_molecule = Molecule(self.molecules[i].num_atoms)
                         new_molecule = deepcopy(self.molecules[i])
                         trans = np.transpose(np.array([x, y, z]))
                         trans = np.matmul(self.cif.transform, trans)
@@ -366,7 +361,8 @@ class Cluster:
         new_mol = []
         for m in self.molecules:
             n = self.molecules.index(m)
-            if mc_fract[n][0, 0] >= up_limit or mc_fract[n][0, 1] >= up_limit or mc_fract[n][0, 2] >= up_limit or mc_fract[n][0, 0] <= low_limit or mc_fract[n][0, 1] <= low_limit or mc_fract[n][0, 2] <= low_limit:
+            if mc_fract[n][0, 0] >= up_limit or mc_fract[n][0, 1] >= up_limit or mc_fract[n][0, 2] >= up_limit or \
+                    mc_fract[n][0, 0] <= low_limit or mc_fract[n][0, 1] <= low_limit or mc_fract[n][0, 2] <= low_limit:
                 for_deletion.append(n)
         for i in range(len(self.molecules)):
             if i not in for_deletion:
@@ -382,8 +378,9 @@ class Cluster:
     def print_cluster_xyz(self):
         full_path = getcwd()
         file = open(full_path + "/cluster.xyz", "w")
+        total_number = 0
         for n in range(len(self.molecules)):
-            total_number = total_number + self.molecules[n].num_atoms
+            total_number += self.molecules[n].num_atoms
         file.write(repr(total_number) + "\n")
         file.write("XYZ file of molecular cluster generated in Kujo\n")
         for n in range(len(self.molecules)):
@@ -408,7 +405,7 @@ class Cluster:
                 file.write(l + x + y + z + "\n")
             for i1 in range(3):
                 for i2 in range(3):
-                    file.write(repr(round(self.molecules[n].inertia_eig_vec[i1, i2]), 6) + " ")
+                    file.write(repr(round(self.molecules[n].inertia_eig_vec[i1, i2], 6)) + " ")
                 file.write("\n")
         file.close()
 
@@ -425,4 +422,3 @@ class Cluster:
                                self.pre_molecules[0].num_atoms))
         self.mass_centers = []
         self.out_translation = [(a + 1) * self.cif.vector_a, (b + 1) * self.cif.vector_b, (c + 1) * self.cif.vector_c]
-
