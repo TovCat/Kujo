@@ -1,5 +1,7 @@
 import numpy as np
 import reader.cif
+import reader.charges
+from copy import deepcopy
 
 A = 219500  # Hartree to cm-1
 bohr = 0.529177210  # bohr in Å
@@ -40,6 +42,20 @@ def coupling_extended_dipole(angles1: np.array, angles2: np.array, mu: np.array,
     r_mp = np.linalg.norm(p1_2 - p2_1)
     r_mm = np.linalg.norm(p1_2 - p2_2)
     return (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm)) * A
+
+
+def coupling_charges(c: reader.charges.Charges, mol_temp: reader.cif.Molecule, dr, r):
+    mol = deepcopy(c.mol)
+    x_rot, y_rot, z_rot = reader.cif.rotation_matrix(mol_temp.alpha, mol_temp.beta, mol_temp.gamma)
+    reader.cif.transform(mol, x_rot)
+    reader.cif.transform(mol, y_rot)
+    reader.cif.transform(mol, z_rot)
+    mol.atom_coord += dr
+    J = 0.0
+    for n in range(c.mol.num_atoms):
+        for m in range(c.mol.num_atoms):
+            J += c.q[n] * c.q[m] / r
+    return J * A
 
 
 def hamiltonian_diagonal_disorder(H, sigma, exp):
