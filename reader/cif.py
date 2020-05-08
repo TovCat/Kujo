@@ -424,6 +424,7 @@ class Cluster:
         """
         mols = []
         mols.append(self.molecules[0])
+        translate = np.zeros((1, 3))
         if axis == "a":
             translate = self.cif.vector_a
         elif axis == "b":

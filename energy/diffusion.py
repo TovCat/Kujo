@@ -40,15 +40,23 @@ def distribute_over_plane(plane, bins):
 
 
 def distribute_over_sphere(bins):
-    theta = np.random.uniform(0, np.pi, bins)
+    theta_linspace = np.linspace(0, np.pi, bins)
+    theta_weights = np.zeros(bins)
+    theta_sum = 0.0
+    for i in bins:
+        theta_weights[i] = np.sin(theta_linspace[i])
+        theta_sum += theta_weights[i]
+    theta_weights /= theta_sum
+    theta = np.random.choice(theta_linspace, bins, p=theta_weights)
     phi = np.random.uniform(0, 2 * np.pi, bins)
     distribution = []
     for x in bins:
-        theta_sin = np.sin(theta[x])
-        theta_cos = np.cos(theta[x])
-        phi_sin = np.sin(phi[x])
-        phi_cos = np.cos(phi[x])
-        distribution.append(np.array([theta_sin * phi_cos, theta_sin * phi_sin, theta_cos]))
+        for y in bins:
+            theta_sin = np.sin(theta[x])
+            theta_cos = np.cos(theta[x])
+            phi_sin = np.sin(phi[y])
+            phi_cos = np.cos(phi[y])
+            distribution.append(np.array([theta_sin * phi_cos, theta_sin * phi_sin, theta_cos]))
     return distribution
 
 
@@ -59,3 +67,6 @@ def diffusion_no_thermal(H: np.array, E: np.array, r: np.array, u: np.array, gam
             j = np.inner(u, r / bohr) * H[n, m] / A
             D += (gamma / (gamma ** 2 + (E[n] / A - E[m] / A) ** 2)) * (j ** 2)
     return D
+
+
+def diffusion_thermal(H: np.array, E: np.array, r: np.array, u: np.array, gamma):
