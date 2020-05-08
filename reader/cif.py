@@ -24,7 +24,7 @@ def transform(m: np.array, trans: np.array):
     Perform coordinate transformation.
     """
     for i in range(m.shape[0]):
-        m[i:i + 1] = np.matmul(m[i:i + 1], trans)
+        m[i:i + 1] = np.transpose(np.matmul(np.transpose(m[i:i + 1]), trans))
 
 
 def rotation_matrix(alpha, beta, gamma):
@@ -276,7 +276,7 @@ class Cluster:
                 self.bonds[line, k] = 1
                 self.bonds[k, line] = 1
 
-    def range_matrix_mass_centers(self):
+    def build_range_matrix_mass_centers(self):
         for i in range(len(self.molecules)):
             self.mass_centers.append(self.molecules.mass_center())
         self.range_matrix_mc = np.zeros((len(self.molecules), len(self.molecules)))
@@ -284,8 +284,13 @@ class Cluster:
             for m in range(n + 1, len(self.molecules)):
                 self.range_matrix_mc[n, m] = np.linalg.norm(self.mass_centers[n] - self.mass_centers[m])
                 self.range_matrix_mc[m, n] = self.range_matrix_mc[m, n]
+        for n in range(len(self.molecules)):
+            temp = []
+            for m in range(len(self.molecules)):
+                temp.append(self.mass_centers[n] - self.mass_centers[m])
+            self.r_matrix.append(temp)
 
-    def range_matrix_periodic(self):
+    def build_range_matrix_periodic(self):
         self.range_matrix_periodic = np.zeros((len(self.molecules), len(self.molecules)))
         for n in range(len(self.molecules)):
             for m in range(n + 1, len(self.molecules)):
@@ -439,3 +444,4 @@ class Cluster:
                                self.pre_molecules[0].num_atoms))
         self.mass_centers = []
         self.out_translation = [(a + 1) * self.cif.vector_a, (b + 1) * self.cif.vector_b, (c + 1) * self.cif.vector_c]
+        self.r_matrix = []
