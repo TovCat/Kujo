@@ -7,9 +7,9 @@ bohr = 0.529177210  # bohr in Å
 
 def align_dipole(angles: np.array, mu: np.array):
     x_r, y_r, z_r = reader.cif.rotation_matrix(angles[0], angles[1], angles[2])
-    temp = np.transpose(np.matmul(np.tramspose(mu)), x_r)
-    temp = np.transpose(np.matmul(np.tramspose(temp)), y_r)
-    temp = np.transpose(np.matmul(np.tramspose(temp)), z_r)
+    temp = np.transpose(np.matmul(np.transpose(mu), x_r))
+    temp = np.transpose(np.matmul(np.transpose(temp), y_r))
+    temp = np.transpose(np.matmul(np.transpose(temp), z_r))
     return temp
 
 
@@ -20,35 +20,21 @@ def coupling_dipole(angles1: np.array, angles2: np.array, mu: np.array, distance
     r3 = r1 ** 3
     r5 = r1 ** 5
     J = np.inner(mu_1, mu_2) / r3 + (np.inner(mu, r) * np.inner(r, mu)) / r5
-    return J / A
+    return J * A
 
 
-def hamiltonian_dipole(c: rc.Cluster, mu, H):
-    for n in range(len(c.molecules)):
-        for m in range(n + 1, len(c.molecules)):
-            v1 = np.zeros((1, 3))
-            v2 = np.zeros((1, 3))
-            v1 = c.mass_centers[n]
-            v2 = c.mass_centers[m]
-            dv = v1 - v2
-            r1 = np.linalg.norm(dv)
-            r1 = r1 / bohr3
-            r3 = r1 * r1 * r1
-            r5 = r3 * r1 * r1
-            J = np.inner(mu, mu) / r3 + (np.inner(mu, dv) * np.inner(dv, mu)) / r5
-            H[n, m] = J * A
-            H[m, n] = H[n, m]
-
-
-def coupling_extended_dipole(d, mu, translation):
-    d = d / bohr3
+def coupling_extended_dipole(angles1: np.array, angles2: np.array, mu: np.array, r, d):
+    mu_1 = align_dipole(angles1, mu)
+    mu_2 = align_dipole(angles2, mu)
+    d = d / bohr
     q = np.linalg.norm(mu) / (2 * d)
-    mu_trans = mu * (d / np.linalg.norm(mu))
-    mass_center_bohr = translation / bohr3
-    p1_1 = mu_trans
-    p1_2 = -1 * mu_trans
-    p2_1 = mass_center_bohr + mu_trans
-    p2_2 = mass_center_bohr - mu_trans
+    mu_trans_1 = mu_1 * (d / np.linalg.norm(mu_1))
+    mu_trans_2 = mu_2 * (d / np.linalg.norm(mu_2))
+    r_bohr = r / bohr
+    p1_1 = mu_trans_1
+    p1_2 = -1 * mu_trans_1
+    p2_1 = r_bohr + mu_trans_2
+    p2_2 = r_bohr - mu_trans_2
     r_pp = np.linalg.norm(p1_1 - p2_1)
     r_pm = np.linalg.norm(p1_1 - p2_2)
     r_mp = np.linalg.norm(p1_2 - p2_1)
