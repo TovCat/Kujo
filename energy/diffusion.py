@@ -5,6 +5,25 @@ A = 219500  # Hartree to cm-1
 bohr = 0.529177210  # bohr in Å
 
 
+def participation_ratio(H: np.array, E: np.array, c: np.array):
+    numerators = []
+    denominators = []
+    for q1 in range(H.shape[0]):
+        for q2 in range(q1 + 1, H.shape[0]):
+            inner = 0
+            for n in range(c[q2].shape[0]):
+                inner += c[q2, n] ** 4
+            if q1 != q2:
+                numerators.append((E[q1] - E[q2]) * inner)
+                denominators.append(E[q1] - E[q2])
+    numerators_sum = 0
+    denominators_sum = 0
+    for i in range(len(numerators)):
+        numerators_sum += numerators[i]
+        denominators_sum += denominators[i]
+    return 1 / ((numerators_sum / len(numerators)) / (denominators_sum / len(denominators)))
+
+
 def distribute_over_plane(plane, bins):
     u = np.linspace(0, 2 * np.pi, bins)
     distribution = []
