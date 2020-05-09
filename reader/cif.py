@@ -436,6 +436,16 @@ class Cluster:
             temp.atom_coord += translate
             mols.append(temp)
 
+    def generate_dipole_matrix(self, mu: np.array):
+        self.dipole_matrix = np.zeros((len(self.molecules), 3))
+        for n in range(len(self.molecules)):
+            new_mu = mu
+            x_rot, y_rot, z_rot = rotation_matrix(self.molecules[n].alpha, self.molecules[n].beta, self.molecules[n].gamma)
+            transform(new_mu, x_rot)
+            transform(new_mu, y_rot)
+            transform(new_mu, z_rot)
+            self.molecules[n:n+1] = new_mu
+
     def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []
         self.cif = cif
