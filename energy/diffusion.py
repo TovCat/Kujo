@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.constants
 
 
 A = 219500  # Hartree to cm-1
@@ -68,7 +69,23 @@ def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: 
                 for m_j in range(H.shape[0]):
                     j = np.inner(u, r[n, m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
                     D += (gamma / (gamma ** 2 + (E[n] / A - E[m] / A) ** 2)) * (j ** 2)
-    return D
+    return D / H.shape[0]
 
 
-def diffusion_thermal(H: np.array, E: np.array, r: np.array, u: np.array, gamma):
+def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.array, gamma, T):
+    """
+    Haken–Strobl–Reineker model
+    """
+    Z = 0.0
+    D = 0.0
+    exp_sum = 0.0
+    for n in range(H.shape[0]):
+        exponent = np.exp((-1 * scipy.constants.hbar * E[n]) / (scipy.constants.Boltzmann * T))
+        exp_sum += exponent
+        for m in range(n + 1, H.shape[0]):
+            for n_j in range(H.shape[0]):
+                for m_j in range(H.shape[0]):
+                    pre_coeff = gamma / (gamma ** 2 + (E[n] - E[m]) ** 2)
+                    j = np.inner(u, r[n, m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
+                    D += pre_coeff * j * j * exponent
+        return D / exp_sum
