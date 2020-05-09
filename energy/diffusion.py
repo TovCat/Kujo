@@ -60,12 +60,14 @@ def distribute_over_sphere(bins):
     return distribution
 
 
-def diffusion_no_thermal(H: np.array, E: np.array, r: np.array, u: np.array, gamma):
+def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.array, gamma):
     D = 0.0
     for n in range(H.shape[0]):
         for m in range(n + 1, H.shape[0]):
-            j = np.inner(u, r / bohr) * H[n, m] / A
-            D += (gamma / (gamma ** 2 + (E[n] / A - E[m] / A) ** 2)) * (j ** 2)
+            for n_j in range(H.shape[0]):
+                for m_j in range(H.shape[0]):
+                    j = np.inner(u, r[n, m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
+                    D += (gamma / (gamma ** 2 + (E[n] / A - E[m] / A) ** 2)) * (j ** 2)
     return D
 
 
