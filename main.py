@@ -1,12 +1,12 @@
 import numpy as np
 from os import getcwd
 import sys
-import kujo_io
+import utility.kujo_io
 import concurrent.futures
-import reader_cube
-import reader_cif
+import reader.cube
+import reader.cif
 import time
-import excitons
+import energy.excitons
 
 cube = None
 cif = None
@@ -52,7 +52,7 @@ def read_cube(v: list):
     options_parse(options_dispatcher, v)
     global cube
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    cube = reader_cube.Cube(full_path)
+    cube = reader.cube.Cube(full_path)
 
 
 def read_cif(v: list):
@@ -62,7 +62,7 @@ def read_cif(v: list):
     options_parse(options_dispatcher, v)
     global cif
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    cif = reader_cif.CifFile(full_path)
+    cif = reader.cif.CifFile(full_path)
 
 
 def coupling_td_integration(v: list):
@@ -173,7 +173,7 @@ def coupling_extended_dipole_wrapper(v: list):
         exit(-1)
     dipole = np.array([float(options_dispatcher["mu_x"]), float(options_dispatcher["mu_y"]),
                        float(options_dispatcher["mu_z"])])
-    return excitons.coupling_extended_dipole(options_dispatcher["d"], dipole, t)
+    return energy.excitons.coupling_extended_dipole(options_dispatcher["d"], dipole, t)
 
 dispatcher = {
     "coupling_td_integration": coupling_td_integration,
@@ -181,8 +181,8 @@ dispatcher = {
     "read_cube": read_cube,
     "read_cif": read_cif,
     "build_cluster": build_cluster,
-    "print_cluster_xyz": reader_cif.Cluster.print_cluster_xyz,
-    "print_cluster_kujo": reader_cif.Cluster.print_cluster_readable,
+    "print_cluster_xyz": reader.cif.Cluster.print_cluster_xyz,
+    "print_cluster_kujo": reader.cif.Cluster.print_cluster_readable,
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff,
     "set_max_workers": set_max_workers
@@ -190,7 +190,7 @@ dispatcher = {
 
 if __name__ == "__main__":
     execute_time = time.time()
-    instructions, options = kujo_io.read_input("input.txt")
+    instructions, options = utility.kujo_io.read_input("input.txt")
     suffix = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
     out = f"/output{suffix}.out"
     for i in range(len(instructions)):
