@@ -4,6 +4,8 @@ import sys
 import utility.kujo_io
 import concurrent.futures
 import reader.cube
+import reader.charges
+import reader.orca
 import reader.cif
 import time
 import energy.excitons
@@ -11,6 +13,8 @@ import energy.excitons
 cube = None
 cif = None
 cluster = None
+charges = None
+orca = None
 max_w = None
 hard_cutoff = 0.0
 int_cutoff = 0.0
@@ -63,6 +67,16 @@ def read_cif(v: list):
     global cif
     full_path = getcwd() + f"/{options_dispatcher['file']}"
     cif = reader.cif.CifFile(full_path)
+
+
+def read_charges(v: list):
+    options_dispatcher = {
+        "file": ""
+    }
+    options_parse(options_dispatcher, v)
+    global charges
+    full_path = getcwd() + f"/{options_dispatcher['file']}"
+    charges = reader.charges.Charges(full_path)
 
 
 def coupling_td_integration(v: list):
