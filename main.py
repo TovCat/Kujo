@@ -79,6 +79,16 @@ def read_charges(v: list):
     charges = reader.charges.Charges(full_path)
 
 
+def read_orca(v: list):
+    options_dispatcher = {
+        "file": ""
+    }
+    options_parse(options_dispatcher, v)
+    global orca
+    full_path = getcwd() + f"/{options_dispatcher['file']}"
+    orca = reader.orca.Orca(full_path)
+
+
 def coupling_td_integration(v: list):
     options_dispatcher = {
         "vector": None,
@@ -189,11 +199,14 @@ def coupling_extended_dipole_wrapper(v: list):
                        float(options_dispatcher["mu_z"])])
     return energy.excitons.coupling_extended_dipole(options_dispatcher["d"], dipole, t)
 
+
 dispatcher = {
     "coupling_td_integration": coupling_td_integration,
     "coupling_extended_dipole": coupling_extended_dipole_wrapper,
     "read_cube": read_cube,
     "read_cif": read_cif,
+    "read_orca": read_orca,
+    "read_charges": read_charges,
     "build_cluster": build_cluster,
     "print_cluster_xyz": reader.cif.Cluster.print_cluster_xyz,
     "print_cluster_kujo": reader.cif.Cluster.print_cluster_readable,
