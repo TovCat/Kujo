@@ -123,16 +123,16 @@ class Molecule:
 
 
 def match_rotation(original_mol, mol_to_match: Molecule):
-    for x in range(round(1000 * np.pi), 1000):
-        for y in range(round(1000 * np.pi), 1000):
-            for z in range(round(1000 * np.pi), 1000):
+    for x in range(round(1000 * np.pi)):
+        for y in range(round(1000 * np.pi)):
+            for z in range(round(1000 * np.pi)):
                 rotated_mol = original_mol
-                x_rot, y_rot, z_rot = rotation_matrix(x, y, z)
+                x_rot, y_rot, z_rot = rotation_matrix(x / 1000, y / 1000, z / 1000)
                 transform(rotated_mol.atom_coord, x_rot)
                 transform(rotated_mol.atom_coord, y_rot)
                 transform(rotated_mol.atom_coord, z_rot)
                 if rotated_mol == mol_to_match:
-                    return x, y, z
+                    return x / 1000, y / 1000 , z / 1000
 
 
 class CifFile:
@@ -177,10 +177,11 @@ class CifFile:
             s = contents[index_loop].strip()
             loop_list = []
             while s != "" and s != "loop_":
-                loop_list.append(s)
-                index_loop = index_loop + 1
                 s = contents[index_loop].strip()
-            if loop_list[0] == "_symmetry_equiv_pos_as_xyz" or "_space_group_symop_operation_xyz":
+                if s != "":
+                    loop_list.append(s)
+                index_loop = index_loop + 1
+            if loop_list[0] == "_symmetry_equiv_pos_as_xyz" or loop_list[0] == "_space_group_symop_operation_xyz":
                 for i in range(1, len(loop_list)):
                     self.xyz.append(loop_list[i].replace("'", "").split(", "))
             positions = {
@@ -345,6 +346,7 @@ class Cluster:
             for i in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
                 if checked[i, 0] != 1:
                     flag = False
+            mol.sort()
             new_molecule = Molecule(len(mol))
             for i in range(len(mol)):
                 m = mol[i] // self.pre_molecules[0].num_atoms
@@ -364,8 +366,7 @@ class Cluster:
         low_limit = -0.001
         for_deletion = []
         new_mol = []
-        for m in self.molecules:
-            n = self.molecules.index(m)
+        for n in range(len(self.molecules)):
             if mc_fract[n][0, 0] >= up_limit or mc_fract[n][0, 1] >= up_limit or mc_fract[n][0, 2] >= up_limit or \
                     mc_fract[n][0, 0] <= low_limit or mc_fract[n][0, 1] <= low_limit or mc_fract[n][0, 2] <= low_limit:
                 for_deletion.append(n)
@@ -422,8 +423,7 @@ class Cluster:
         """
         Builds 1d cluster
         """
-        mols = []
-        mols.append(self.molecules[0])
+        mols = [self.molecules[0]]
         translate = np.zeros((1, 3))
         if axis == "a":
             translate = self.cif.vector_a
@@ -432,9 +432,10 @@ class Cluster:
         elif axis == "c":
             translate = self.cif.vector_c
         for i in range(n):
-            temp = deepcopy(mols[n])
+            temp = deepcopy(self.molecules[0])
             temp.atom_coord += translate
             mols.append(temp)
+        self.molecules = mols
 
     def generate_dipole_matrix(self, mu: np.array):
         self.dipole_matrix = np.zeros((len(self.molecules), 3))
@@ -450,6 +451,7 @@ class Cluster:
         self.pre_molecules = []
         self.cif = cif
         self.pre_molecules.append(self.cif.asym_unit)
+        self.build()
         self.molecules = []
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
