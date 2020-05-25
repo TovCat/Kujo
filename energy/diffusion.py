@@ -64,7 +64,7 @@ def distribute_over_sphere(bins):
 def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.array, gamma):
     D = 0.0
     for n in range(H.shape[0]):
-        for m in range(n + 1, H.shape[0]):
+        for m in range(H.shape[0]):
             for n_j in range(H.shape[0]):
                 for m_j in range(H.shape[0]):
                     j = np.inner(u, r[n, m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
@@ -82,7 +82,7 @@ def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.
     for n in range(H.shape[0]):
         exponent = np.exp((-1 * scipy.constants.hbar * E[n]) / (scipy.constants.Boltzmann * T))
         exp_sum += exponent
-        for m in range(n + 1, H.shape[0]):
+        for m in range(H.shape[0]):
             for n_j in range(H.shape[0]):
                 for m_j in range(H.shape[0]):
                     pre_coeff = gamma / (gamma ** 2 + (E[n] - E[m]) ** 2)
