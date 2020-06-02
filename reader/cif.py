@@ -302,9 +302,6 @@ class Cluster:
                 self.range_matrix_periodic[m, n] = self.range_matrix_periodic[n, m]
 
     def multiply(self, a: int, b: int, c: int):
-        self.mass_centers = []
-        for i in range(len(self.molecules)):
-            self.mass_centers.append(self.molecules[i].mass_center())
         mass_centers_fract = []
         for i in range(len(self.mass_centers)):
             t = np.transpose(self.mass_centers[i])
