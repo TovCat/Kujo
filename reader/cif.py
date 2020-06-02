@@ -132,7 +132,9 @@ def match_rotation(original_mol, mol_to_match: Molecule):
                 transform(rotated_mol.atom_coord, y_rot)
                 transform(rotated_mol.atom_coord, z_rot)
                 if rotated_mol == mol_to_match:
-                    return x / 1000, y / 1000 , z / 1000
+                    mol_to_match.alpha = x / 1000
+                    mol_to_match.beta = y / 1000
+                    mol_to_match.gamma = z / 1000
 
 
 class CifFile:

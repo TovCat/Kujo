@@ -196,15 +196,18 @@ def build_cluster(v: list):
     options_parse(options_dispatcher, v)
     cluster = reader_cif.Cluster(cif)
     cluster.build()
-    it = list(range((len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms)))
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        executor.map(cluster.connectivity, it)
-    cluster.rebuild()
     it = []
     for i in range(len(cluster.pre_molecules)):
         it.append(cluster.pre_molecules[i])
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
         executor.map(cluster.to_cartesian, it)
+    it = list(range((len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms)))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+        executor.map(cluster.connectivity, it)
+    cluster.rebuild()
+    it = list(range(len(cluster.molecules)))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+        executor.map(reader.cif.match_rotation(cluster.molecules[0], cluster.molecules))
     cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
 
 
