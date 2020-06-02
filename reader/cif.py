@@ -279,19 +279,14 @@ class Cluster:
                 self.bonds[line, k] = 1
                 self.bonds[k, line] = 1
 
-    def build_range_matrix_mass_centers(self):
-        self.mass_centers = []
+    def build_r_mc_matrices(self):
         for i in range(len(self.molecules)):
             self.mass_centers.append(self.molecules[i].mass_center())
-        self.range_matrix_mc = np.zeros((len(self.molecules), len(self.molecules)))
-        for n in range(len(self.molecules)):
-            for m in range(n + 1, len(self.molecules)):
-                self.range_matrix_mc[n, m] = np.linalg.norm(self.mass_centers[n] - self.mass_centers[m])
-                self.range_matrix_mc[m, n] = self.range_matrix_mc[n, m]
+        self.r_matrix = []
         for n in range(len(self.molecules)):
             temp = []
             for m in range(len(self.molecules)):
-                temp.append(self.mass_centers[n] - self.mass_centers[m])
+               temp.append(self.mass_centers[n] - self.mass_centers[m])
             self.r_matrix.append(temp)
 
     def build_range_matrix_periodic(self):
