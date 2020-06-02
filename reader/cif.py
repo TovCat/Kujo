@@ -418,10 +418,6 @@ class Cluster:
                 file.write("\n")
         file.close()
 
-    def measure_rotations(self):
-        for x in self.molecules:
-            x.alpha, x.beta, x.gamma = match_rotation(self.molecules[0], x)
-
     def build_1d(self, axis, n):
         """
         Builds 1d cluster
@@ -454,7 +450,6 @@ class Cluster:
         self.pre_molecules = []
         self.cif = cif
         self.pre_molecules.append(self.cif.asym_unit)
-        self.build()
         self.molecules = []
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
