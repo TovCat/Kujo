@@ -1,6 +1,6 @@
 from os import getcwd
-import reader_cif
-import reader_cube
+import reader.cif
+import reader.cube
 
 
 def output_error(text: str, error_code: int):
@@ -61,7 +61,7 @@ def print_hamiltonian(H):
     file.close()
 
 
-def print_site(cl: reader_cif.Cluster, s1, s2: int):
+def print_site(cl: reader.cif.Cluster, s1, s2: int):
     full_path = getcwd()
     file = open(full_path + "/site" + str(s) + ".xyz", "w")
     for n in range(len(cl.molecules)):

@@ -1,6 +1,6 @@
 import numpy as np
-import reader_cif as rc
-import dictionaries as dic
+import reader.cif as rc
+import utility.dictionaries as dic
 
 
 class Cube:
