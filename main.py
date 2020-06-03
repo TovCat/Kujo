@@ -162,21 +162,8 @@ def build_cluster(v: list):
     cluster = reader.cif.Cluster(cif, options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
     cluster.build()
     it = []
-    for i in range(len(cluster.pre_molecules)):
-        it.append(cluster.pre_molecules[i])
-    if max_w is not None:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            executor.map(cluster.to_cartesian, it)
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            executor.map(cluster.to_cartesian, it)
-    it = list(range((len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms)))
-    if max_w is not None:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            executor.map(cluster.connectivity, it)
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            executor.map(cluster.connectivity, it)
+    cluster.to_cartesian()
+    cluster.connectivity()
     cluster.rebuild()
     it = list(range(len(cluster.molecules)))
     if max_w is not None:

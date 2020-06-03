@@ -248,8 +248,6 @@ class CifFile:
 class Cluster:
 
     def build(self):
-        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
-                               self.pre_molecules[0].num_atoms))
         for i1 in range(len(self.cif.xyz)):
             mult, add = parse_eq_xyz(self.cif.xyz[i1])
             for x in range(-3, 3):
@@ -265,21 +263,24 @@ class Cluster:
                                 coincide = True
                         if new_molecule.inside() and not coincide:
                             self.pre_molecules.append(new_molecule)
+        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+                               self.pre_molecules[0].num_atoms))
 
-    def connectivity(self, line: int):
-        for k in range(line + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-            m1 = line // self.pre_molecules[0].num_atoms
-            m1n = line % self.pre_molecules[0].num_atoms
-            m2 = k // self.pre_molecules[0].num_atoms
-            m2n = k % self.pre_molecules[0].num_atoms
-            v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
-            v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
-            dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
-            limit_dist = utility.dictionaries.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
-                         utility.dictionaries.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
-            if dist <= limit_dist:
-                self.bonds[line, k] = 1
-                self.bonds[k, line] = 1
+    def connectivity(self):
+        for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+                m1 = n // self.pre_molecules[0].num_atoms
+                m1n = n % self.pre_molecules[0].num_atoms
+                m2 = k // self.pre_molecules[0].num_atoms
+                m2n = k % self.pre_molecules[0].num_atoms
+                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
+                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
+                dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
+                limit_dist = utility.dictionaries.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                             utility.dictionaries.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+                if dist <= limit_dist:
+                    self.bonds[n, k] = 1
+                    self.bonds[k, n] = 1
 
     def build_r_mc_matrices(self):
         for i in range(len(self.molecules)):
@@ -372,11 +373,12 @@ class Cluster:
                 new_mol.append(self.molecules[i])
         self.molecules = new_mol
 
-    def to_cartesian(self, mol: Molecule):
-        for i in range(mol.num_atoms):
-            vector = mol.atom_coord[i:i + 1]
-            vector = np.transpose(np.matmul(self.cif.transform, np.transpose(vector)))
-            mol.atom_coord[i:i + 1] = vector
+    def to_cartesian(self):
+        for mol in self.pre_molecules:
+            for i in range(mol.num_atoms):
+                vector = mol.atom_coord[i:i + 1]
+                vector = np.transpose(np.matmul(self.cif.transform, np.transpose(vector)))
+                mol.atom_coord[i:i + 1] = vector
 
     def print_cluster_xyz(self):
         full_path = getcwd()
