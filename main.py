@@ -89,40 +89,6 @@ def read_orca(v: list):
     orca = reader.orca.Orca(full_path)
 
 
-def build_cluster(v: list):
-    options_dispatcher = {
-        "a": 0,
-        "b": 0,
-        "c": 0,
-        "periodic": False
-    }
-    options_parse(options_dispatcher, v)
-    global cluster
-    global cif
-    cluster = reader.cif.Cluster(cif, options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
-    cluster.build()
-    it = []
-    for i in cluster.pre_molecules:
-        it.append(i)
-    if max_w is not None:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            results = executor.map(cluster.to_cartesian, it)
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = executor.map(cluster.to_cartesian, it)
-    it = []
-    for i in range(len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms):
-        it.append(i)
-    if max_w is not None:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            results = executor.map(cluster.connectivity, it)
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = executor.map(cluster.connectivity, it)
-    cluster.rebuild()
-    cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
-
-
 def coupling_td_integration(v: list):
     options_dispatcher = {
         "vector": None,
@@ -185,8 +151,6 @@ def set_max_workers(v: list):
 
 
 def build_cluster(v: list):
-    if "reader_cif" not in sys.modules:
-        import reader_cif
     global cluster
     options_dispatcher = {
         "a": 0,
@@ -194,20 +158,32 @@ def build_cluster(v: list):
         "c": 0
     }
     options_parse(options_dispatcher, v)
-    cluster = reader_cif.Cluster(cif)
+    cluster = reader.cif.Cluster(cif)
     cluster.build()
     it = []
     for i in range(len(cluster.pre_molecules)):
         it.append(cluster.pre_molecules[i])
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-        executor.map(cluster.to_cartesian, it)
+    if max_w is not None:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+            executor.map(cluster.to_cartesian, it)
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(cluster.to_cartesian, it)
     it = list(range((len(cluster.pre_molecules) * cluster.pre_molecules[0].num_atoms)))
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-        executor.map(cluster.connectivity, it)
+    if max_w is not None:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+            executor.map(cluster.connectivity, it)
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(cluster.connectivity, it)
     cluster.rebuild()
     it = list(range(len(cluster.molecules)))
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-        executor.map(reader.cif.match_rotation(cluster.molecules[0], cluster.molecules))
+    if max_w is not None:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+            executor.map(reader.cif.match_rotation(cluster.molecules[0], cluster.molecules))
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(reader.cif.match_rotation(cluster.molecules[0], cluster.molecules))
     cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
 
 
