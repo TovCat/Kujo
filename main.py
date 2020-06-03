@@ -152,13 +152,14 @@ def set_max_workers(v: list):
 
 def build_cluster(v: list):
     global cluster
+    global cif
     options_dispatcher = {
         "a": 0,
         "b": 0,
         "c": 0
     }
     options_parse(options_dispatcher, v)
-    cluster = reader.cif.Cluster(cif)
+    cluster = reader.cif.Cluster(cif, options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
     cluster.build()
     it = []
     for i in range(len(cluster.pre_molecules)):

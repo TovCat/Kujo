@@ -248,6 +248,8 @@ class CifFile:
 class Cluster:
 
     def build(self):
+        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
+                               self.pre_molecules[0].num_atoms))
         for i1 in range(len(self.cif.xyz)):
             mult, add = parse_eq_xyz(self.cif.xyz[i1])
             for x in range(-3, 3):
@@ -443,8 +445,6 @@ class Cluster:
         self.cif = cif
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
-        self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
-                               self.pre_molecules[0].num_atoms))
         self.mass_centers = []
         self.out_translation = [(a + 1) * self.cif.vector_a, (b + 1) * self.cif.vector_b, (c + 1) * self.cif.vector_c]
         self.r_matrix = []
