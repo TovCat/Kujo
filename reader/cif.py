@@ -33,9 +33,9 @@ def rotation_matrix(axis, angle):
     """
     if axis == "a":
         matrix = np.array([[1, 0, 0], [0, np.cos(angle), -1 * np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
-    elif axis == "b"
+    elif axis == "b":
         matrix = np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-1 * np.sin(angle), 0, np.cos(angle)]])
-    elif axis == "c"
+    elif axis == "c":
         matrix = np.array([[np.cos(angle), -1 * np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
     return matrix
 
@@ -459,12 +459,17 @@ class Cluster:
                 transform(orig_mol.atom_coord, self.cif.rev_transform)
                 transform(mol_to_rotate.atom_coord, self.cif.rev_transform)
                 axis_list = []
-                axis_list.append(rotation_matrix(np.pi, 0, 0))
+                alignments = ["a", "b", "c"]
+                for al in alignments:
+                    axis_list.append(rotation_matrix(al, np.pi))
                 for i1 in range(len(axis_list)):
                     test_mol = deepcopy(mol_to_rotate)
                     transform(test_mol.atom_coord, axis_list[i1])
+                    t_vector = orig_mol.mass_center() - test_mol.mass_center()
+                    test_mol.atom_coord += t_vector
                     if test_mol == orig_mol:
                         self.molecules[i].rotation = axis_list[i1]
+                        break
 
 
     def __init__(self, cif: CifFile, a, b, c):
