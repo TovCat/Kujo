@@ -24,7 +24,7 @@ def transform(m: np.array, trans: np.array):
     Perform coordinate transformation.
     """
     for i in range(m.shape[0]):
-        m[i:i + 1] = np.transpose(np.matmul(np.transpose(m[i:i + 1]), trans))
+        m[i:i + 1] = np.transpose(np.matmul(trans, np.transpose(m[i:i + 1])))
 
 
 def rotation_matrix(alpha, beta, gamma):
@@ -71,9 +71,7 @@ class Molecule:
         self.internal_coord = np.zeros((n, 3))
         self.threshold = 0.1
         # rotation angles with respect the first cluster molecule
-        self.alpha = 0.0
-        self.beta = 0.0
-        self.gamma = 0.0
+        self.rotation = np.zeros((3,3))
 
     def inside(self):
         a1 = 1 + self.threshold
@@ -91,7 +89,9 @@ class Molecule:
 
     def __eq__(self, other):
         for i in range(self.num_atoms):
-            diff = np.linalg.norm(self.atom_coord[i:i + 1] - other.atom_coord[i:i + 1])
+            v_1 = self.atom_coord[i:i + 1]
+            v_2 = other.atom_coord[i:i + 1]
+            diff = np.linalg.norm(v_1 - v_2)
             if diff < 0.05:
                 return True
         return False
@@ -126,7 +126,7 @@ def match_rotation(original_mol, mol_to_match: Molecule):
     for x in range(round(1000 * np.pi)):
         for y in range(round(1000 * np.pi)):
             for z in range(round(1000 * np.pi)):
-                rotated_mol = original_mol
+                rotated_mol = deepcopy(original_mol)
                 x_rot, y_rot, z_rot = rotation_matrix(x / 1000, y / 1000, z / 1000)
                 transform(rotated_mol.atom_coord, x_rot)
                 transform(rotated_mol.atom_coord, y_rot)
@@ -441,6 +441,27 @@ class Cluster:
             transform(new_mu, y_rot)
             transform(new_mu, z_rot)
             self.molecules[n:n+1] = new_mu
+
+    def find_rotations(self):
+        orig_mol = deepcopy(self.molecules[0])
+        orig_mc = orig_mol.mass_center()
+        for i in range(1, len(self.molecules)):
+            mol_to_rotate = deepcopy(self.molecules[i])
+            mc_rotate = mol_to_rotate.mass_center()
+            t_vector = orig_mc - mc_rotate
+            mol_to_rotate.atom_coord += t_vector
+            if orig_mol == mol_to_rotate:
+                self.molecules[i] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+            else:
+                transform(orig_mol.atom_coord, self.cif.rev_transform)
+                transform(mol_to_rotate.atom_coord, self.cif.rev_transform)
+                axis_list = [rotation_matrix(np.pi, 0, 0), rotation_matrix(0, np.pi, 0), rotation_matrix(0, 0, np.pi)]
+                for i1 in range(len(axis_list)):
+                    test_mol = deepcopy(mol_to_rotate)
+                    transform(test_mol.atom_coord, axis_list[i1])
+                    if test_mol == orig_mol:
+                        self.molecules[i].rotation = axis_list[i1]
+
 
     def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []

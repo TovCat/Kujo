@@ -165,13 +165,7 @@ def build_cluster(v: list):
     cluster.to_cartesian()
     cluster.connectivity()
     cluster.rebuild()
-    it = list(range(len(cluster.molecules)))
-    if max_w is not None:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            executor.map(reader.cif.match_rotation(cluster.molecules[0], cluster.molecules))
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            executor.map(reader.cif.match_rotation(cluster.molecules[0], cluster.molecules))
+    cluster.find_rotations()
     cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
 
 
