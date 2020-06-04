@@ -125,21 +125,6 @@ class Molecule:
         return r
 
 
-def match_rotation(original_mol, mol_to_match: Molecule):
-    for x in range(round(1000 * np.pi)):
-        for y in range(round(1000 * np.pi)):
-            for z in range(round(1000 * np.pi)):
-                rotated_mol = deepcopy(original_mol)
-                x_rot, y_rot, z_rot = rotation_matrix(x / 1000, y / 1000, z / 1000)
-                transform(rotated_mol.atom_coord, x_rot)
-                transform(rotated_mol.atom_coord, y_rot)
-                transform(rotated_mol.atom_coord, z_rot)
-                if rotated_mol == mol_to_match:
-                    mol_to_match.alpha = x / 1000
-                    mol_to_match.beta = y / 1000
-                    mol_to_match.gamma = z / 1000
-
-
 class CifFile:
 
     def __init__(self, path=""):
@@ -285,7 +270,7 @@ class Cluster:
                     self.bonds[n, k] = 1
                     self.bonds[k, n] = 1
 
-    def build_r_mc_matrices(self):
+    def build_rmc(self):
         for i in range(len(self.molecules)):
             self.mass_centers.append(self.molecules[i].mass_center())
         self.r_matrix = []
@@ -295,7 +280,7 @@ class Cluster:
                temp.append(self.mass_centers[n] - self.mass_centers[m])
             self.r_matrix.append(temp)
 
-    def build_range_matrix_periodic(self):
+    def build_rmc_periodic(self):
         self.range_matrix_periodic = np.zeros((len(self.molecules), len(self.molecules)))
         for n in range(len(self.molecules)):
             for m in range(n + 1, len(self.molecules)):

@@ -167,6 +167,7 @@ def build_cluster(v: list):
     cluster.rebuild()
     cluster.find_rotations()
     cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
+    cluster.build_rmc()
 
 
 def coupling_extended_dipole_wrapper(v: list):
