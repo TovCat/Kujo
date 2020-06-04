@@ -438,7 +438,10 @@ class Cluster:
         axis_list = []
         alignments = ["a", "b", "c"]
         for al in alignments:
-            axis_list.append(rotation_matrix(al, np.pi))
+            for order in range(2, 7):
+                if order != 5:
+                    for suborder in range(1, order - 1):
+                        axis_list.append(rotation_matrix(al, np.pi * suborder / (order - 1)))
         for i in range(1, len(self.molecules)):
             mol_to_rotate = deepcopy(self.molecules[i])
             mc_rotate = mol_to_rotate.mass_center()
