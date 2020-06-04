@@ -27,14 +27,17 @@ def transform(m: np.array, trans: np.array):
         m[i:i + 1] = np.transpose(np.matmul(trans, np.transpose(m[i:i + 1])))
 
 
-def rotation_matrix(alpha, beta, gamma):
+def rotation_matrix(axis, angle):
     """
     Generate rotation matrix for alpha, beta and gamma angles (x, y, z).
     """
-    x_rotation = np.array([[1, 0, 0], [0, np.cos(alpha), -1 * np.sin(alpha)], [0, np.sin(alpha), np.cos(alpha)]])
-    y_rotation = np.array([[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-1 * np.sin(beta), 0, np.cos(beta)]])
-    z_rotation = np.array([[np.cos(gamma), -1 * np.sin(gamma), 0], [np.sin(gamma), np.cos(gamma), 0], [0, 0, 1]])
-    return x_rotation, y_rotation, z_rotation
+    if axis == "a":
+        matrix = np.array([[1, 0, 0], [0, np.cos(angle), -1 * np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
+    elif axis == "b"
+        matrix = np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-1 * np.sin(angle), 0, np.cos(angle)]])
+    elif axis == "c"
+        matrix = np.array([[np.cos(angle), -1 * np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
+    return matrix
 
 
 def parse_eq_xyz(eq: list):
@@ -455,7 +458,8 @@ class Cluster:
             else:
                 transform(orig_mol.atom_coord, self.cif.rev_transform)
                 transform(mol_to_rotate.atom_coord, self.cif.rev_transform)
-                axis_list = [rotation_matrix(np.pi, 0, 0), rotation_matrix(0, np.pi, 0), rotation_matrix(0, 0, np.pi)]
+                axis_list = []
+                axis_list.append(rotation_matrix(np.pi, 0, 0))
                 for i1 in range(len(axis_list)):
                     test_mol = deepcopy(mol_to_rotate)
                     transform(test_mol.atom_coord, axis_list[i1])
