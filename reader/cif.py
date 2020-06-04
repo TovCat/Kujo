@@ -447,7 +447,13 @@ class Cluster:
 
     def find_rotations(self):
         orig_mol = deepcopy(self.molecules[0])
+        orig_mol_fract = deepcopy(self.molecules[0])
         orig_mc = orig_mol.mass_center()
+        transform(orig_mol_fract.atom_coord, self.cif.rev_transform)
+        axis_list = []
+        alignments = ["a", "b", "c"]
+        for al in alignments:
+            axis_list.append(rotation_matrix(al, np.pi))
         for i in range(1, len(self.molecules)):
             mol_to_rotate = deepcopy(self.molecules[i])
             mc_rotate = mol_to_rotate.mass_center()
@@ -456,18 +462,13 @@ class Cluster:
             if orig_mol == mol_to_rotate:
                 self.molecules[i] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
             else:
-                transform(orig_mol.atom_coord, self.cif.rev_transform)
                 transform(mol_to_rotate.atom_coord, self.cif.rev_transform)
-                axis_list = []
-                alignments = ["a", "b", "c"]
-                for al in alignments:
-                    axis_list.append(rotation_matrix(al, np.pi))
                 for i1 in range(len(axis_list)):
                     test_mol = deepcopy(mol_to_rotate)
                     transform(test_mol.atom_coord, axis_list[i1])
-                    t_vector = orig_mol.mass_center() - test_mol.mass_center()
+                    t_vector = orig_mol_fract.mass_center() - test_mol.mass_center()
                     test_mol.atom_coord += t_vector
-                    if test_mol == orig_mol:
+                    if test_mol == orig_mol_fract:
                         self.molecules[i].rotation = axis_list[i1]
                         break
 
