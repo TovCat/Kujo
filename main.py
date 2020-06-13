@@ -233,6 +233,7 @@ def translated_coupling_dipole(v: list):
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
     "tranlated_coupling_extended_dipole": translated_coupling_extended_dipole,
+    "translated_coupling_dipole": translated_coupling_dipole,
     "read_cube": read_cube,
     "read_cif": read_cif,
     "read_orca": read_orca,
