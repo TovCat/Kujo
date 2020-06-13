@@ -50,9 +50,12 @@ class Cube:
                     self.grid.append(temp)
 
 
-def integrate_cubes(mol1: rc.Molecule, mol2: rc.Molecule, c: Cube, n: int):
-    c1 = deepcopy(c)
-    c2 = deepcopy(c)
+def integrate_cubes(l: list):
+    mol1 = l[0]
+    mol2 = l[1]
+    c1 = l[2]
+    c2 = l[2]
+    n = l[3]
     for x in len(c.grid):
         rc.transform(c1.grid[x], mol1.rotation)
         rc.transform(c2.grid[x]. mol2.rotation)

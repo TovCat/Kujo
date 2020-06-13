@@ -256,20 +256,42 @@ def generate_disorder(v: list):
     global disorders
     n = H.shape[0]
     for i in range(options_dispatcher["n"]):
-        disorders.append(n, options_dispatcher["sigma"])
+        disorders.append(energy.excitons.diagonal_disorder_sample(n, options_dispatcher["sigma"]))
 
 
 def calculate_coupling(v: list):
     options_dispatcher = {
         "method": "",
         "site1": 0,
-        "site2": 0
+        "site2": 0,
+        "d": 0
     }
     options_parse(options_dispatcher, v)
     mol1 = cluster.molecules[options_dispatcher["site1"]]
     mol2 = cluster.molecules[options_dispatcher["site2"]]
     if options_dispatcher["method"] == "dipole":
-        return
+        mu = orca.mu
+        return energy.excitons.coupling_dipole(mol1, mol2, mu)
+    elif options_dispatcher["method"] == "extended_dipole":
+        mu = orca.mu
+        return energy.excitons.coupling_extended_dipole(mol1, mol2, mu, options_dispatcher["d"])
+    elif options_dispatcher["method"] == "charges":
+        return energy.excitons.coupling_charges(mol1, mol2, charges.q)
+    elif options_dispatcher["method"] == "integration":
+        it = []
+        for i1 in range(cube.steps[0, 0]):
+            it.append([mol1, mol2, cube, i1])
+        if max_w is not None:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+                results = executor.map(reader.cube.integrate_cubes, it)
+                for x in results:
+                    r = r + x
+        else:
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                results = executor.map(reader.cube.integrate_cubes, it)
+                for x in results:
+                    r = r + x
+        return r
     
 
 dispatcher = {
@@ -287,7 +309,8 @@ dispatcher = {
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff,
     "set_max_workers": set_max_workers,
-    "generate_disorder": generate_disorder
+    "generate_disorder": generate_disorder,
+    "calculate_coupling": calculate_coupling
 }
 
 if __name__ == "__main__":
