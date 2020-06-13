@@ -1,6 +1,6 @@
 import numpy as np
 from os import getcwd
-import sys
+from copy import deepcopy
 import utility.kujo_io
 import concurrent.futures
 import reader.cube
@@ -89,7 +89,7 @@ def read_orca(v: list):
     orca = reader.orca.Orca(full_path)
 
 
-def coupling_td_integration(v: list):
+def translated_coupling_td_integration(v: list):
     options_dispatcher = {
         "vector": None,
         "vector_cif": "",
@@ -170,7 +170,7 @@ def build_cluster(v: list):
     cluster.build_rmc()
 
 
-def coupling_extended_dipole_wrapper(v: list):
+def translated_coupling_extended_dipole(v: list):
     options_dispatcher = {
         "vector": None,
         "vector_cif": "",
@@ -193,12 +193,46 @@ def coupling_extended_dipole_wrapper(v: list):
         exit(-1)
     dipole = np.array([float(options_dispatcher["mu_x"]), float(options_dispatcher["mu_y"]),
                        float(options_dispatcher["mu_z"])])
-    return energy.excitons.coupling_extended_dipole(options_dispatcher["d"], dipole, t)
+    mol1 = cluster.molecules[0]
+    mol2 = deepcopy(mol1)
+    mol2.atom_coord + t
+    d = options_dispatcher["d"]
+    return energy.excitons.coupling_extended_dipole(mol1, mol2, dipole, d)
+
+
+def translated_coupling_dipole(v: list):
+    options_dispatcher = {
+        "vector": None,
+        "vector_cif": "",
+        "multiplier": 1.0,
+        "mu_x": 0.0,
+        "mu_y": 0.0,
+        "mu_z": 0.0
+    }
+    options_parse(options_dispatcher, v)
+    global cif
+    if options_dispatcher["vector_cif"] == "a":
+        t = cif.vector_a * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "b":
+        t = cif.vector_b * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "c":
+        t = cif.vector_c * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector"] is not None:
+        t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
+    else:
+        exit(-1)
+    dipole = np.array([float(options_dispatcher["mu_x"]), float(options_dispatcher["mu_y"]),
+                       float(options_dispatcher["mu_z"])])
+    mol1 = cluster.molecules[0]
+    mol2 = deepcopy(mol1)
+    mol2.atom_coord + t
+    r = mol1.mass_center() - mol2.mass_center()
+    return energy.excitons.coupling_dipole(mol1, mol2, dipole)
 
 
 dispatcher = {
-    "coupling_td_integration": coupling_td_integration,
-    "coupling_extended_dipole": coupling_extended_dipole_wrapper,
+    "translated_coupling_td_integration": translated_coupling_td_integration,
+    "tranlated_coupling_extended_dipole": translated_coupling_extended_dipole,
     "read_cube": read_cube,
     "read_cif": read_cif,
     "read_orca": read_orca,
