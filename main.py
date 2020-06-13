@@ -195,7 +195,7 @@ def translated_coupling_extended_dipole(v: list):
                        float(options_dispatcher["mu_z"])])
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
-    mol2.atom_coord + t
+    mol2.atom_coord = mol2.atom_coord + t
     d = options_dispatcher["d"]
     return energy.excitons.coupling_extended_dipole(mol1, mol2, dipole, d)
 
@@ -225,15 +225,39 @@ def translated_coupling_dipole(v: list):
                        float(options_dispatcher["mu_z"])])
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
-    mol2.atom_coord + t
+    mol2.atom_coord = mol2.atom_coord + t
     r = mol1.mass_center() - mol2.mass_center()
     return energy.excitons.coupling_dipole(mol1, mol2, dipole)
 
 
+def translated_coupling_charges(v: list):
+    options_dispatcher = {
+        "vector": None,
+        "vector_cif": "",
+        "multiplier": 1.0,
+    }
+    options_parse(options_dispatcher, v)
+    if options_dispatcher["vector_cif"] == "a":
+        t = cif.vector_a * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "b":
+        t = cif.vector_b * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector_cif"] == "c":
+        t = cif.vector_c * options_dispatcher["multiplier"]
+    elif options_dispatcher["vector"] is not None:
+        t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
+    else:
+        exit(-1)
+    mol1 = charges.mol
+    mol2 = deepcopy(mol1)
+    mol2.atom_coord = mol2.atom_coord + t
+    return energy.excitons.coupling_charges(mol1, mol2, charges.q)
+
+
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
-    "tranlated_coupling_extended_dipole": translated_coupling_extended_dipole,
+    "translated_coupling_extended_dipole": translated_coupling_extended_dipole,
     "translated_coupling_dipole": translated_coupling_dipole,
+    "translated_coupling_charges": translated_coupling_charges,
     "read_cube": read_cube,
     "read_cif": read_cif,
     "read_orca": read_orca,

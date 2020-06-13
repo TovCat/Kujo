@@ -7,15 +7,7 @@ A = 219500  # Hartree to cm-1
 bohr = 0.529177210  # bohr in Å
 
 
-def align_dipole(angles: np.array, mu: np.array):
-    x_r, y_r, z_r = reader.cif.rotation_matrix(angles[0], angles[1], angles[2])
-    temp = np.transpose(np.matmul(np.transpose(mu), x_r))
-    temp = np.transpose(np.matmul(np.transpose(temp), y_r))
-    temp = np.transpose(np.matmul(np.transpose(temp), z_r))
-    return temp
-
-
-def coupling_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, mu: np.array,):
+def coupling_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, mu: np.array):
     mu_1 = mu
     mu_2 = mu
     reader.cif.transform(mu_1, mol1.rotation)
@@ -51,17 +43,14 @@ def coupling_extended_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecul
     return (q ** 2) * ((1 / r_pp) - (1 / r_pm) - (1 / r_mp) + (1 / r_mm)) * A
 
 
-def coupling_charges(c: reader.charges.Charges, mol_temp: reader.cif.Molecule, dr, r):
-    mol = deepcopy(c.mol)
-    x_rot, y_rot, z_rot = reader.cif.rotation_matrix(mol_temp.alpha, mol_temp.beta, mol_temp.gamma)
-    reader.cif.transform(mol, x_rot)
-    reader.cif.transform(mol, y_rot)
-    reader.cif.transform(mol, z_rot)
-    mol.atom_coord += dr
+def coupling_charges(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, q):
+    reader.cif.transform(mol1.atom_coord, mol1.rotation)
+    reader.cif.transform(mol2.atom_coord, mol2.rotation)
     J = 0.0
-    for n in range(c.mol.num_atoms):
-        for m in range(c.mol.num_atoms):
-            J += c.q[n] * c.q[m] / r
+    for n in range(mol1.num_atoms):
+        for m in range(mol2.num_atoms):
+            r = np.linalg.norm(mol1.atom_coord[n:n + 1] - mol2.atom_coord[m:m + 1]) / bohr
+            J += q[n] * q[m] / r
     return J * A
 
 
