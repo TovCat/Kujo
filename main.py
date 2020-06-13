@@ -178,9 +178,6 @@ def translated_coupling_extended_dipole(v: list):
         "vector_cif": "",
         "multiplier": 1.0,
         "d": 0.0,
-        "mu_x": 0.0,
-        "mu_y": 0.0,
-        "mu_z": 0.0
     }
     options_parse(options_dispatcher, v)
     if options_dispatcher["vector_cif"] == "a":
@@ -193,13 +190,12 @@ def translated_coupling_extended_dipole(v: list):
         t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
         exit(-1)
-    dipole = np.array([float(options_dispatcher["mu_x"]), float(options_dispatcher["mu_y"]),
-                       float(options_dispatcher["mu_z"])])
+    mu = orca.mu
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
     mol2.atom_coord = mol2.atom_coord + t
     d = options_dispatcher["d"]
-    return energy.excitons.coupling_extended_dipole(mol1, mol2, dipole, d)
+    return energy.excitons.coupling_extended_dipole(mol1, mol2, mu, d)
 
 
 def translated_coupling_dipole(v: list):
@@ -207,9 +203,6 @@ def translated_coupling_dipole(v: list):
         "vector": None,
         "vector_cif": "",
         "multiplier": 1.0,
-        "mu_x": 0.0,
-        "mu_y": 0.0,
-        "mu_z": 0.0
     }
     options_parse(options_dispatcher, v)
     global cif
@@ -223,13 +216,12 @@ def translated_coupling_dipole(v: list):
         t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
         exit(-1)
-    dipole = np.array([float(options_dispatcher["mu_x"]), float(options_dispatcher["mu_y"]),
-                       float(options_dispatcher["mu_z"])])
+    mu = orca.mu
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
     mol2.atom_coord = mol2.atom_coord + t
     r = mol1.mass_center() - mol2.mass_center()
-    return energy.excitons.coupling_dipole(mol1, mol2, dipole)
+    return energy.excitons.coupling_dipole(mol1, mol2, mu)
 
 
 def translated_coupling_charges(v: list):
@@ -266,6 +258,19 @@ def generate_disorder(v: list):
     for i in range(options_dispatcher["n"]):
         disorders.append(n, options_dispatcher["sigma"])
 
+
+def calculate_coupling(v: list):
+    options_dispatcher = {
+        "method": "",
+        "site1": 0,
+        "site2": 0
+    }
+    options_parse(options_dispatcher, v)
+    mol1 = cluster.molecules[options_dispatcher["site1"]]
+    mol2 = cluster.molecules[options_dispatcher["site2"]]
+    if options_dispatcher["method"] == "dipole":
+        return
+    
 
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
