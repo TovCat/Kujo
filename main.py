@@ -181,6 +181,9 @@ def translated_coupling_extended_dipole(v: list):
         "vector_cif": "",
         "multiplier": 1.0,
         "d": 0.0,
+        "mu_x": 0.0,
+        "mu_y": 0.0,
+        "mu_z": 0.0
     }
     options_parse(options_dispatcher, v)
     if options_dispatcher["vector_cif"] == "a":
@@ -193,7 +196,10 @@ def translated_coupling_extended_dipole(v: list):
         t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
         exit(-1)
-    mu = orca.mu
+    if options_dispatcher["mu_x"] != 0.0 and options_dispatcher["mu_y"] != 0.0 and options_dispatcher["mu_z"] != 0.0:
+        mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
+    else:
+        mu = orca.mu
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
     mol2.atom_coord = mol2.atom_coord + t
@@ -206,6 +212,9 @@ def translated_coupling_dipole(v: list):
         "vector": None,
         "vector_cif": "",
         "multiplier": 1.0,
+        "mu_x": 0.0,
+        "mu_y": 0.0,
+        "mu_z": 0.0
     }
     options_parse(options_dispatcher, v)
     global cif
@@ -219,7 +228,10 @@ def translated_coupling_dipole(v: list):
         t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
         exit(-1)
-    mu = orca.mu
+    if options_dispatcher["mu_x"] != 0.0 and options_dispatcher["mu_y"] != 0.0 and options_dispatcher["mu_z"] != 0.0:
+        mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
+    else:
+        mu = orca.mu
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
     mol2.atom_coord = mol2.atom_coord + t
@@ -231,7 +243,7 @@ def translated_coupling_charges(v: list):
     options_dispatcher = {
         "vector": None,
         "vector_cif": "",
-        "multiplier": 1.0,
+        "multiplier": 1.0
     }
     options_parse(options_dispatcher, v)
     if options_dispatcher["vector_cif"] == "a":
