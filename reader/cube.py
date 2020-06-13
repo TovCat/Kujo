@@ -1,6 +1,7 @@
 import numpy as np
 import reader.cif as rc
 import utility.dictionaries as dic
+from copy import deepcopy
 
 
 class Cube:
@@ -41,22 +42,32 @@ class Cube:
                     n = z + y * self.steps[2, 0] + x * self.steps[1, 0] * self.steps[2, 0]
                     self.voxels[x, y, z] = sep_contents[n]
         self.dv = self.volume[0, 0] * self.volume[1, 1] * self.volume[2, 2]
+        self.grid = []
+        for x in range(self.steps[0, 0]):
+            for y in range(self.steps[1, 0]):
+                for z in range(self.steps[2, 0]):
+                    temp = self. origin + np.array([x * self.volume[0, 0], y * self.volume[1, 1], z * self.volume[2, 2]])
+                    self.grid.append(temp)
 
-    def integrate(self, l: list):
-        J = 0
-        translate = l[0]
-        x1 = l[1]
-        translate = translate / dic.bohr3
-        for y1 in range(self.steps[1, 0]):
-            for z1 in range(self.steps[2, 0]):
-                for x2 in range(self.steps[0, 0]):
-                    for y2 in range(self.steps[1, 0]):
-                        for z2 in range(self.steps[2, 0]):
-                            v1 = np.array([x1 * self.volume[0, 0], y1 * self.volume[1, 1], z1 * self.volume[2, 2]]) + \
-                                 self.origin
-                            v2 = np.array([x2 * self.volume[0, 0], y2 * self.volume[1, 1], z2 * self.volume[2, 2]]) + \
-                                 self.origin + translate
-                            r = np.linalg.norm(v1 - v2)
-                            J = J + ((self.voxels[x1, y1, z1] * self.dv) * (self.voxels[x2, y2, z2] * self.dv)) / r
-        J = J * dic.A
-        return J
+
+def integrate_cubes(mol1: rc.Molecule, mol2: rc.Molecule, c: Cube, n: int):
+    c1 = deepcopy(c)
+    c2 = deepcopy(c)
+    for x in len(c.grid):
+        rc.transform(c1.grid[x], mol1.rotation)
+        rc.transform(c2.grid[x]. mol2.rotation)
+    for y1 in range(c.steps[1, 0]):
+        for z1 in range(c.steps[2, 0]):
+            for x2 in range(c.steps[0, 0]):
+                for y2 in range(c.steps[1, 0]):
+                    for z2 in range(c.steps[2, 0]):
+                        i1 = z1 + y1 * c.steps[2, 0] + n * c.steps[2, 0] * c.steps[1, 0]
+                        i2 = z2 + y2 * c.steps[2, 0] + x2 * c.steps[2, 0] * c.steps[1, 0]
+                        r = np.linalg.norm(c1.grid[i1] - c2.grid[i2])
+                        J = J + ((c.voxels[n, y1, z1] * c.dv) * (c.voxels[x2, y2, z2] * c.dv)) / r
+    J = J * dic.A
+    return J
+
+
+
+
