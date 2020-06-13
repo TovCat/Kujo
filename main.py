@@ -15,6 +15,8 @@ cif = None
 cluster = None
 charges = None
 orca = None
+H = None
+disorders = []
 max_w = None
 hard_cutoff = 0.0
 int_cutoff = 0.0
@@ -253,6 +255,18 @@ def translated_coupling_charges(v: list):
     return energy.excitons.coupling_charges(mol1, mol2, charges.q)
 
 
+def generate_disorder(v: list):
+    options_dispatcher = {
+        "sigma": 0,
+        "n": 1
+    }
+    options_parse(options_dispatcher, v)
+    global disorders
+    n = H.shape[0]
+    for i in range(options_dispatcher["n"]):
+        disorders.append(n, options_dispatcher["sigma"])
+
+
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
     "translated_coupling_extended_dipole": translated_coupling_extended_dipole,
@@ -267,7 +281,8 @@ dispatcher = {
     "print_cluster_kujo": reader.cif.Cluster.print_cluster_readable,
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff,
-    "set_max_workers": set_max_workers
+    "set_max_workers": set_max_workers,
+    "generate_disorder": generate_disorder
 }
 
 if __name__ == "__main__":

@@ -54,6 +54,8 @@ def coupling_charges(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, q):
     return J * A
 
 
-def hamiltonian_diagonal_disorder(H, sigma, exp):
-    for n in range(H.shape[0]):
-        H[n, n] = np.random.normal(exp, sigma)
+def diagonal_disorder_sample(n, sigma):
+    l = []
+    for i in range(n):
+        l.append(np.random.normal(0, sigma))
+    return l
