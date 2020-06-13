@@ -110,16 +110,19 @@ def translated_coupling_td_integration(v: list):
         exit(-1)
     r = 0.0
     it = []
+    mol1 = deepcopy(cube.molecule)
+    mol2 = deepcopy(cube.molecule)
+    mol2.atom_coord = mol2.atom_coord + t
     for i1 in range(cube.steps[0, 0]):
-        it.append([translate, i1])
+        it.append([mol1, mol2, cube, i1])
     if max_w is not None:
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            results = executor.map(cube.integrate, it)
+            results = executor.map(reader.cube.integrate_cubes, it)
             for x in results:
                 r = r + x
     else:
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = executor.map(cube.integrate, it)
+            results = executor.map(reader.cube.integrate_cubes, it)
             for x in results:
                 r = r + x
     return r
