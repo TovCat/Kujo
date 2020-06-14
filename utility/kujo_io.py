@@ -56,24 +56,27 @@ def print_hamiltonian(H):
     file = open(full_path + "/hamiltonian.kujo", "w")
     for n in range(H.shape[0]):
         for m in range(H.shape[1]):
-            file.write(repr(round(H[n,m]), 6) + " ")
+            file.write(repr(round(H[n, m]), 6) + " ")
         file.write("\n")
     file.close()
 
 
-def print_site(cl: reader.cif.Cluster, s1, s2: int):
+def print_dimer(cl: reader.cif.Cluster, s1, s2: int):
     full_path = getcwd()
-    file = open(full_path + "/site" + str(s) + ".xyz", "w")
+    file = open(f'{full_path}/site_{s1}_{s2}.xyz', "w")
+    total_number = 0
     for n in range(len(cl.molecules)):
-        total_number = total_number + cl.molecules[n].num_atoms
+        total_number += + cl.molecules[n].num_atoms
     file.write(repr(total_number) + "\n")
     file.write("XYZ file of molecular cluster generated in Kujo\n")
     for n in range(len(cl.molecules)):
         for m in range(cl.molecules[n].num_atoms):
             if n != s1 or n != s2:
                 l = "H"
+            else:
+                l = cl.molecules[n].atom_label
             x = repr(round(cl.molecules[n].atom_coord[m, 0], 6))
             y = repr(round(cl.molecules[n].atom_coord[m, 1], 6))
             z = repr(round(cl.molecules[n].atom_coord[m, 2], 6))
-            file.write(l + x + y + z + "\n")
+            file.write(f'{l}   {x}   {y}   {z}\n')
     file.close()

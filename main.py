@@ -307,7 +307,16 @@ def calculate_coupling(v: list):
                 for x in results:
                     r = r + x
         return r
-    
+
+
+def print_dimer_wrapper(v: list):
+    options_dispatcher = {
+        "site1": 0,
+        "site2": 0
+    }
+    options_parse(options_dispatcher, v)
+    utility.kujo_io.print_dimer(cluster, options_dispatcher["site1"], options_dispatcher["site2"])
+
 
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
