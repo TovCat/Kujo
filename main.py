@@ -112,7 +112,7 @@ def translated_coupling_td_integration(v: list):
     it = []
     mol1 = deepcopy(cube.molecule)
     mol2 = deepcopy(cube.molecule)
-    mol2.atom_coord = mol2.atom_coord + t
+    mol2.atom_coord = mol2.atom_coord + translate
     for i1 in range(cube.steps[0, 0]):
         it.append([mol1, mol2, cube, i1])
     if max_w is not None:
@@ -334,7 +334,8 @@ dispatcher = {
     "set_int_cutoff": set_int_cutoff,
     "set_max_workers": set_max_workers,
     "generate_disorder": generate_disorder,
-    "calculate_coupling": calculate_coupling
+    "calculate_coupling": calculate_coupling,
+    "print_dimer_wrapper": utility.kujo_io.print_dimer
 }
 
 if __name__ == "__main__":

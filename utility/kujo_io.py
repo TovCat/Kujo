@@ -56,7 +56,7 @@ def print_hamiltonian(H):
     file = open(full_path + "/hamiltonian.kujo", "w")
     for n in range(H.shape[0]):
         for m in range(H.shape[1]):
-            file.write(repr(round(H[n, m]), 6) + " ")
+            file.write(repr(round(H[n, m], 6)) + " ")
         file.write("\n")
     file.close()
 
