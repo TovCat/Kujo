@@ -44,6 +44,7 @@ def read_input(path: str):
                         options[flag].append(y)
         else:
             instructions.append(x)
+            options.append("")
     if len(options) != 0:
         for x in range(len(options)):
             for y in range(len(options[x])):
