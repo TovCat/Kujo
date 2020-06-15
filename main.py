@@ -31,22 +31,26 @@ def options_parse(dsp: dict, opt: list):
                 dsp[opt[i1]] = False
             else:
                 try:
-                    fl = float(opt[i1 + 1])
-                    dsp[opt[i1]] = fl
+                    i = int(opt[i1 + 1])
+                    dsp[opt[i1]] = i
                 except ValueError:
-                    if "[" in opt[i1 + 1] or "]" in opt[i1 + 1]:
-                        opt[i1 + 1].replace("[", "")
-                        opt[i1 + 1].replace("]", "")
-                        words = opt[i1 + 1].split(",")
-                        temp = np.zeros([len(words), 1])
-                        try:
-                            for i in range(len(words)):
-                                temp[i, 0] = float(words[i])
-                            dsp[opt[i1]] = temp
-                        except ValueError:
-                            exit(-1)
-                    else:
-                        dsp[opt[i1]] = opt[i1 + 1]
+                    try:
+                        fl = float(opt[i1 + 1])
+                        dsp[opt[i1]] = fl
+                    except ValueError:
+                        if "[" in opt[i1 + 1] or "]" in opt[i1 + 1]:
+                            opt[i1 + 1].replace("[", "")
+                            opt[i1 + 1].replace("]", "")
+                            words = opt[i1 + 1].split(",")
+                            temp = np.zeros([len(words), 1])
+                            try:
+                                for i in range(len(words)):
+                                    temp[i, 0] = float(words[i])
+                                dsp[opt[i1]] = temp
+                            except ValueError:
+                                exit(-1)
+                        else:
+                            dsp[opt[i1]] = opt[i1 + 1]
         else:
             exit(-1)
 
@@ -346,14 +350,14 @@ dispatcher = {
     "read_orca": read_orca,
     "read_charges": read_charges,
     "build_cluster": build_cluster,
-    "print_cluster_xyz": reader.cif.Cluster.print_cluster_xyz,
     "print_cluster_kujo": reader.cif.Cluster.print_cluster_readable,
     "set_hard_cutoff": set_hard_cutoff,
     "set_int_cutoff": set_int_cutoff,
     "set_max_workers": set_max_workers,
     "generate_disorder": generate_disorder,
     "calculate_coupling": calculate_coupling,
-    "print_dimer": utility.kujo_io.print_dimer
+    "print_dimer": utility.kujo_io.print_dimer,
+    "print_cluster_xyz": print_cluster_xyz
 }
 
 if __name__ == "__main__":
