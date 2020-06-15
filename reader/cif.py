@@ -368,23 +368,6 @@ class Cluster:
                 vector = np.transpose(np.matmul(self.cif.transform, np.transpose(vector)))
                 mol.atom_coord[i:i + 1] = vector
 
-    def print_cluster_xyz(self):
-        full_path = getcwd()
-        file = open(full_path + "/cluster.xyz", "w")
-        total_number = 0
-        for n in range(len(self.molecules)):
-            total_number += self.molecules[n].num_atoms
-        file.write(repr(total_number) + "\n")
-        file.write("XYZ file of molecular cluster generated in Kujo\n")
-        for n in range(len(self.molecules)):
-            for m in range(self.molecules[n].num_atoms):
-                l = self.molecules[n].atom_label[m]
-                x = repr(round(self.molecules[n].atom_coord[m, 0], 6))
-                y = repr(round(self.molecules[n].atom_coord[m, 1], 6))
-                z = repr(round(self.molecules[n].atom_coord[m, 2], 6))
-                file.write(l + x + y + z + "\n")
-        file.close()
-
     def print_cluster_readable(self):
         full_path = getcwd()
         file = open(full_path + "/cluster.kujo", "w")

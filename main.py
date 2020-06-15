@@ -318,6 +318,24 @@ def print_dimer_wrapper(v: list):
     utility.kujo_io.print_dimer(cluster, options_dispatcher["site1"], options_dispatcher["site2"])
 
 
+def print_cluster_xyz(v: list):
+    full_path = getcwd()
+    file = open(full_path + "/cluster.xyz", "w")
+    total_number = 0
+    for n in range(len(cluster.molecules)):
+        total_number += cluster.molecules[n].num_atoms
+    file.write(repr(total_number) + "\n")
+    file.write("XYZ file of molecular cluster generated in Kujo\n")
+    for n in range(len(cluster.molecules)):
+        for m in range(cluster.molecules[n].num_atoms):
+            l = cluster.molecules[n].atom_label[m]
+            x = repr(round(cluster.molecules[n].atom_coord[m, 0], 6))
+            y = repr(round(cluster.molecules[n].atom_coord[m, 1], 6))
+            z = repr(round(cluster.molecules[n].atom_coord[m, 2], 6))
+            file.write(f'{l}   {x}   {y}   {z}\n')
+    file.close()
+
+
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
     "translated_coupling_extended_dipole": translated_coupling_extended_dipole,
@@ -335,7 +353,7 @@ dispatcher = {
     "set_max_workers": set_max_workers,
     "generate_disorder": generate_disorder,
     "calculate_coupling": calculate_coupling,
-    "print_dimer_wrapper": utility.kujo_io.print_dimer
+    "print_dimer": utility.kujo_io.print_dimer
 }
 
 if __name__ == "__main__":
