@@ -172,11 +172,12 @@ def build_cluster(v: list):
     cluster.build()
     it = []
     cluster.to_cartesian()
-    #cluster.connectivity()
-    #cluster.rebuild()
-    #cluster.find_rotations()
-    #cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
-    #cluster.build_rmc()
+    if not ("print_cluster_xyz_premolecules" in instructions):
+        cluster.connectivity()
+        cluster.rebuild()
+        cluster.find_rotations()
+        cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
+        cluster.build_rmc()
 
 
 def translated_coupling_extended_dipole(v: list):
