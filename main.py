@@ -172,11 +172,11 @@ def build_cluster(v: list):
     cluster.build()
     it = []
     cluster.to_cartesian()
-    cluster.connectivity()
-    cluster.rebuild()
-    cluster.find_rotations()
-    cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
-    cluster.build_rmc()
+    #cluster.connectivity()
+    #cluster.rebuild()
+    #cluster.find_rotations()
+    #cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
+    #cluster.build_rmc()
 
 
 def translated_coupling_extended_dipole(v: list):
@@ -340,6 +340,24 @@ def print_cluster_xyz(v: list):
     file.close()
 
 
+def print_cluster_xyz_premolecules(v: list):
+    full_path = getcwd()
+    file = open(full_path + "/cluster_premolecules.xyz", "w")
+    total_number = 0
+    for n in range(len(cluster.pre_molecules)):
+        total_number += cluster.pre_molecules[n].num_atoms
+    file.write(repr(total_number) + "\n")
+    file.write("XYZ file of molecular cluster generated in Kujo\n")
+    for n in range(len(cluster.pre_molecules)):
+        for m in range(cluster.pre_molecules[n].num_atoms):
+            l = cluster.pre_molecules[n].atom_label[m]
+            x = repr(round(cluster.pre_molecules[n].atom_coord[m, 0], 6))
+            y = repr(round(cluster.pre_molecules[n].atom_coord[m, 1], 6))
+            z = repr(round(cluster.pre_molecules[n].atom_coord[m, 2], 6))
+            file.write(f'{l}   {x}   {y}   {z}\n')
+    file.close()
+
+
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
     "translated_coupling_extended_dipole": translated_coupling_extended_dipole,
@@ -357,7 +375,8 @@ dispatcher = {
     "generate_disorder": generate_disorder,
     "calculate_coupling": calculate_coupling,
     "print_dimer": utility.kujo_io.print_dimer,
-    "print_cluster_xyz": print_cluster_xyz
+    "print_cluster_xyz": print_cluster_xyz,
+    "print_cluster_xyz_premolecules": print_cluster_xyz_premolecules
 }
 
 if __name__ == "__main__":
