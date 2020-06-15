@@ -294,8 +294,8 @@ class Cluster:
 
     def multiply(self, a: int, b: int, c: int):
         mass_centers_fract = []
-        for i in range(len(self.mass_centers)):
-            t = np.transpose(self.mass_centers[i])
+        for i in range(len(self.molecules)):
+            t = np.transpose(self.molecules[i].mass_center())
             t = np.matmul(self.cif.rev_transform, t)
             mass_centers_fract.append(np.transpose(t))
         for i in range(len(self.molecules)):
@@ -423,7 +423,7 @@ class Cluster:
         for al in alignments:
             for order in range(2, 7):
                 if order != 5:
-                    for suborder in range(1, order - 1):
+                    for suborder in range(1, order):
                         axis_list.append(rotation_matrix(al, np.pi * suborder / (order - 1)))
         for i in range(1, len(self.molecules)):
             mol_to_rotate = deepcopy(self.molecules[i])
@@ -431,7 +431,7 @@ class Cluster:
             t_vector = orig_mc - mc_rotate
             mol_to_rotate.atom_coord += t_vector
             if orig_mol == mol_to_rotate:
-                self.molecules[i] = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+                self.molecules[i].rotation = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
             else:
                 transform(mol_to_rotate.atom_coord, self.cif.rev_transform)
                 for i1 in range(len(axis_list)):
