@@ -55,53 +55,31 @@ def options_parse(dsp: dict, opt: list):
             exit(-1)
 
 
-def read_cube(v: list):
-    options_dispatcher = {
-        "file": ""
-    }
-    options_parse(options_dispatcher, v)
+def read_cube(options_dispatcher: dict):
     global cube
     full_path = getcwd() + f"/{options_dispatcher['file']}"
     cube = reader.cube.Cube(full_path)
 
 
-def read_cif(v: list):
-    options_dispatcher = {
-        "file": ""
-    }
-    options_parse(options_dispatcher, v)
+def read_cif(options_dispatcher: dict):
     global cif
     full_path = getcwd() + f"/{options_dispatcher['file']}"
     cif = reader.cif.CifFile(full_path)
 
 
-def read_charges(v: list):
-    options_dispatcher = {
-        "file": ""
-    }
-    options_parse(options_dispatcher, v)
+def read_charges(options_dispatcher: dict):
     global charges
     full_path = getcwd() + f"/{options_dispatcher['file']}"
     charges = reader.charges.Charges(full_path)
 
 
-def read_orca(v: list):
-    options_dispatcher = {
-        "file": ""
-    }
-    options_parse(options_dispatcher, v)
+def read_orca(options_dispatcher: dict):
     global orca
     full_path = getcwd() + f"/{options_dispatcher['file']}"
     orca = reader.orca.Orca(full_path)
 
 
-def translated_coupling_td_integration(v: list):
-    options_dispatcher = {
-        "vector": None,
-        "vector_cif": "",
-        "multiplier": 1.0,
-    }
-    options_parse(options_dispatcher, v)
+def translated_coupling_td_integration(options_dispatcher: dict):
     if options_dispatcher["vector_cif"] == "a":
         translate = cif.vector_a * options_dispatcher["multiplier"]
     elif options_dispatcher["vector_cif"] == "b":
@@ -132,42 +110,24 @@ def translated_coupling_td_integration(v: list):
     return r
 
 
-def set_hard_cutoff(v: list):
-    options_dispatcher = {
-        "value": ""
-    }
-    options_parse(options_dispatcher, v)
+def set_hard_cutoff(options_dispatcher: dict):
     global hard_cutoff
     hard_cutoff = float(options_dispatcher["value"])
 
 
-def set_int_cutoff(v: list):
-    options_dispatcher = {
-        "value": ""
-    }
-    options_parse(options_dispatcher, v)
+def set_int_cutoff(options_dispatcher: dict):
     global int_cutoff
     int_cutoff = float(options_dispatcher["value"])
 
 
-def set_max_workers(v: list):
-    options_dispatcher = {
-        "value": ""
-    }
-    options_parse(options_dispatcher, v)
+def set_max_workers(options_dispatcher: dict):
     global max_w
     max_w = int(options_dispatcher["value"])
 
 
-def build_cluster(v: list):
+def build_cluster(options_dispatcher: dict):
     global cluster
     global cif
-    options_dispatcher = {
-        "a": 0,
-        "b": 0,
-        "c": 0
-    }
-    options_parse(options_dispatcher, v)
     cluster = reader.cif.Cluster(cif, options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
     cluster.build()
     it = []
@@ -180,17 +140,7 @@ def build_cluster(v: list):
         cluster.build_rmc()
 
 
-def translated_coupling_extended_dipole(v: list):
-    options_dispatcher = {
-        "vector": None,
-        "vector_cif": "",
-        "multiplier": 1.0,
-        "d": 0.0,
-        "mu_x": 0.0,
-        "mu_y": 0.0,
-        "mu_z": 0.0
-    }
-    options_parse(options_dispatcher, v)
+def translated_coupling_extended_dipole(options_dispatcher: dict):
     if options_dispatcher["vector_cif"] == "a":
         t = cif.vector_a * options_dispatcher["multiplier"]
     elif options_dispatcher["vector_cif"] == "b":
@@ -212,16 +162,7 @@ def translated_coupling_extended_dipole(v: list):
     return energy.excitons.coupling_extended_dipole(mol1, mol2, mu, d)
 
 
-def translated_coupling_dipole(v: list):
-    options_dispatcher = {
-        "vector": None,
-        "vector_cif": "",
-        "multiplier": 1.0,
-        "mu_x": 0.0,
-        "mu_y": 0.0,
-        "mu_z": 0.0
-    }
-    options_parse(options_dispatcher, v)
+def translated_coupling_dipole(options_dispatcher: dict):
     global cif
     if options_dispatcher["vector_cif"] == "a":
         t = cif.vector_a * options_dispatcher["multiplier"]
@@ -244,13 +185,7 @@ def translated_coupling_dipole(v: list):
     return energy.excitons.coupling_dipole(mol1, mol2, mu)
 
 
-def translated_coupling_charges(v: list):
-    options_dispatcher = {
-        "vector": None,
-        "vector_cif": "",
-        "multiplier": 1.0
-    }
-    options_parse(options_dispatcher, v)
+def translated_coupling_charges(options_dispatcher: dict):
     if options_dispatcher["vector_cif"] == "a":
         t = cif.vector_a * options_dispatcher["multiplier"]
     elif options_dispatcher["vector_cif"] == "b":
@@ -267,31 +202,14 @@ def translated_coupling_charges(v: list):
     return energy.excitons.coupling_charges(mol1, mol2, charges.q)
 
 
-def generate_disorder(v: list):
-    options_dispatcher = {
-        "sigma": 0,
-        "n": 1
-    }
-    options_parse(options_dispatcher, v)
+def generate_disorder(options_dispatcher: dict):
     global disorders
     n = H.shape[0]
     for i in range(options_dispatcher["n"]):
         disorders.append(energy.excitons.diagonal_disorder_sample(n, options_dispatcher["sigma"]))
 
 
-def calculate_coupling(v: list):
-    options_dispatcher = {
-        "method": "",
-        "site1": 0,
-        "site2": 0,
-        "mu_x": 0.0,
-        "mu_y": 0.0,
-        "mu_z": 0.0,
-        "d": 0.0,
-        "mol1": None,
-        "mol2": None
-    }
-    options_parse(options_dispatcher, v)
+def calculate_coupling(options_dispatcher: dict):
     if options_dispatcher["mol1"] is None and options_dispatcher["mol2"] is None:
         mol1 = cluster.molecules[options_dispatcher["site1"]]
         mol2 = cluster.molecules[options_dispatcher["site2"]]
@@ -326,17 +244,8 @@ def calculate_coupling(v: list):
         return r
 
 
-def calculate_hamiltonian(v: list):
-    options_dispatcher = {
-        "method": "",
-        "periodic": False,
-        "mu_x": 0.0,
-        "mu_y": 0.0,
-        "mu_z": 0.0,
-        "d": 0.0
-    }
+def calculate_hamiltonian(options_dispatcher: dict):
     global H
-    options_parse(options_dispatcher, v)
     if options_dispatcher["periodic"]:
         cluster.build_rmc_periodic()
     else:
@@ -356,16 +265,11 @@ def calculate_hamiltonian(v: list):
             H[m, n] = H[n, m]
 
 
-def print_dimer_wrapper(v: list):
-    options_dispatcher = {
-        "site1": 0,
-        "site2": 0
-    }
-    options_parse(options_dispatcher, v)
+def print_dimer_wrapper(options_dispatcher: dict):
     utility.kujo_io.print_dimer(cluster, options_dispatcher["site1"], options_dispatcher["site2"])
 
 
-def print_cluster_xyz(v: list):
+def print_cluster_xyz(options_dispatcher: dict):
     full_path = getcwd()
     file = open(full_path + "/cluster.xyz", "w")
     total_number = 0
@@ -383,7 +287,7 @@ def print_cluster_xyz(v: list):
     file.close()
 
 
-def print_cluster_xyz_premolecules(v: list):
+def print_cluster_xyz_premolecules(options_dispatcher: dict):
     full_path = getcwd()
     file = open(full_path + "/cluster_premolecules.xyz", "w")
     total_number = 0
