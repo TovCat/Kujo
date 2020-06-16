@@ -56,18 +56,19 @@ def integrate_cubes(l: list):
     c1 = l[2]
     c2 = l[2]
     n = l[3]
-    for x in len(c.grid):
+    J = 0
+    for x in range(len(c1.grid)):
         rc.transform(c1.grid[x], mol1.rotation)
         rc.transform(c2.grid[x]. mol2.rotation)
-    for y1 in range(c.steps[1, 0]):
-        for z1 in range(c.steps[2, 0]):
-            for x2 in range(c.steps[0, 0]):
-                for y2 in range(c.steps[1, 0]):
-                    for z2 in range(c.steps[2, 0]):
-                        i1 = z1 + y1 * c.steps[2, 0] + n * c.steps[2, 0] * c.steps[1, 0]
-                        i2 = z2 + y2 * c.steps[2, 0] + x2 * c.steps[2, 0] * c.steps[1, 0]
+    for y1 in range(c1.steps[1, 0]):
+        for z1 in range(c1.steps[2, 0]):
+            for x2 in range(c2.steps[0, 0]):
+                for y2 in range(c2.steps[1, 0]):
+                    for z2 in range(c2.steps[2, 0]):
+                        i1 = z1 + y1 * c1.steps[2, 0] + n * c1.steps[2, 0] * c1.steps[1, 0]
+                        i2 = z2 + y2 * c2.steps[2, 0] + x2 * c2.steps[2, 0] * с2.steps[1, 0]
                         r = np.linalg.norm(c1.grid[i1] - c2.grid[i2])
-                        J = J + ((c.voxels[n, y1, z1] * c.dv) * (c.voxels[x2, y2, z2] * c.dv)) / r
+                        J = J + ((c1.voxels[n, y1, z1] * c1.dv) * (c2.voxels[x2, y2, z2] * c2.dv)) / r
     J = J * dic.A
     return J
 

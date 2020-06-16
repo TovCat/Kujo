@@ -145,7 +145,6 @@ def build_cluster(options_dispatcher: dict):
 
 
 def start_dipole_extended_dipole(options_dispatcher: dict):
-    options_dispatcher_temp = deepcopy(options_dispatcher)
     if options_dispatcher["vector_cif"] == "a":
         t = cif.vector_a * options_dispatcher["multiplier"]
     elif options_dispatcher["vector_cif"] == "b":
