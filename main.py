@@ -284,16 +284,28 @@ def calculate_coupling(v: list):
         "method": "",
         "site1": 0,
         "site2": 0,
-        "d": 0
+        "mu_x": 0.0,
+        "mu_y": 0.0,
+        "mu_z": 0.0,
+        "d": 0.0,
+        "mol1": None,
+        "mol2": None
     }
     options_parse(options_dispatcher, v)
-    mol1 = cluster.molecules[options_dispatcher["site1"]]
-    mol2 = cluster.molecules[options_dispatcher["site2"]]
+    if options_dispatcher["mol1"] is None and options_dispatcher["mol2"] is None:
+        mol1 = cluster.molecules[options_dispatcher["site1"]]
+        mol2 = cluster.molecules[options_dispatcher["site2"]]
+    else:
+        mol1 = options_dispatcher["mol1"]
+        mol2 = options_dispatcher["mol2"]
+    if options_dispatcher["mu_x"] == 0.0 and options_dispatcher["mu_y"] == 0.0 and options_dispatcher["mu_z"]:
+        if options_dispatcher["method"] != "charges" and options_dispatcher["method"] != "integration":
+            mu = orca.mu
+    else:
+        mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
     if options_dispatcher["method"] == "dipole":
-        mu = orca.mu
         return energy.excitons.coupling_dipole(mol1, mol2, mu)
     elif options_dispatcher["method"] == "extended_dipole":
-        mu = orca.mu
         return energy.excitons.coupling_extended_dipole(mol1, mol2, mu, options_dispatcher["d"])
     elif options_dispatcher["method"] == "charges":
         return energy.excitons.coupling_charges(mol1, mol2, charges.q)
@@ -312,6 +324,36 @@ def calculate_coupling(v: list):
                 for x in results:
                     r = r + x
         return r
+
+
+def calculate_hamiltonian(v: list):
+    options_dispatcher = {
+        "method": "",
+        "periodic": False,
+        "mu_x": 0.0,
+        "mu_y": 0.0,
+        "mu_z": 0.0,
+        "d": 0.0
+    }
+    global H
+    options_parse(options_dispatcher, v)
+    if options_dispatcher["periodic"]:
+        cluster.build_rmc_periodic()
+    else:
+        cluster.build_rmc()
+    for n in range(len(cluster.molecules)):
+        for m in range(n + 1, len(cluster.molecules)):
+            mol1 = deepcopy(cluster.molecules(n))
+            mol2 = deepcopy(mol1)
+            mol2.atom_coord += cluster.r_matrix[n][m]
+            reader.cif.transform(mol2, mol2.rotation)
+            v_out = v
+            v_out.append("mol1")
+            v_out.append(mol1)
+            v_out.append("mol2")
+            v_out.append(mol2)
+            H[n, m] = calculate_coupling(v_out)
+            H[m, n] = H[n, m]
 
 
 def print_dimer_wrapper(v: list):
