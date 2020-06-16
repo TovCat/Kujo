@@ -79,6 +79,20 @@ def read_orca(options_dispatcher: dict):
     orca = reader.orca.Orca(full_path)
 
 
+def cube_integration_wrapper(par_list: list):
+    if max_w is not None:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+            results = executor.map(reader.cube.integrate_cubes, par_list)
+            for x in results:
+                r = r + x
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = executor.map(reader.cube.integrate_cubes, par_list)
+            for x in results:
+                r = r + x
+    return r
+
+
 def translated_coupling_td_integration(options_dispatcher: dict):
     if options_dispatcher["vector_cif"] == "a":
         translate = cif.vector_a * options_dispatcher["multiplier"]
@@ -97,17 +111,7 @@ def translated_coupling_td_integration(options_dispatcher: dict):
     mol2.atom_coord = mol2.atom_coord + translate
     for i1 in range(cube.steps[0, 0]):
         it.append([mol1, mol2, cube, i1])
-    if max_w is not None:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-            results = executor.map(reader.cube.integrate_cubes, it)
-            for x in results:
-                r = r + x
-    else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = executor.map(reader.cube.integrate_cubes, it)
-            for x in results:
-                r = r + x
-    return r
+    return cube_integration_wrapper(it)
 
 
 def set_hard_cutoff(options_dispatcher: dict):
@@ -231,17 +235,7 @@ def calculate_coupling(options_dispatcher: dict):
         it = []
         for i1 in range(cube.steps[0, 0]):
             it.append([mol1, mol2, cube, i1])
-        if max_w is not None:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-                results = executor.map(reader.cube.integrate_cubes, it)
-                for x in results:
-                    r = r + x
-        else:
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                results = executor.map(reader.cube.integrate_cubes, it)
-                for x in results:
-                    r = r + x
-        return r
+        return cube_integration_wrapper(it)
 
 
 def calculate_hamiltonian(options_dispatcher: dict):
