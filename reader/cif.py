@@ -281,16 +281,35 @@ class Cluster:
             self.r_matrix.append(temp)
 
     def build_rmc_periodic(self):
-        self.range_matrix_periodic = np.zeros((len(self.molecules), len(self.molecules)))
+        for i in range(len(self.molecules)):
+            self.mass_centers.append(self.molecules[i].mass_center())
+        self.r_matrix = []
         for n in range(len(self.molecules)):
-            for m in range(n + 1, len(self.molecules)):
-                distances = []
-                for x in range(-1, 2):
-                    for y in range(3):
-                        r = self.mass_centers[n] + self.out_translation[y]
-                        distances.append(np.linalg.norm(self.mass_centers[n] - r))
-                self.range_matrix_periodic[n, m] = min(distances)
-                self.range_matrix_periodic[m, n] = self.range_matrix_periodic[n, m]
+            temp_list = []
+            for m in range(len(self.molecules)):
+                temp_list_mol = []
+                for x in range(self.a + 3):
+                    for y in range(self.b + 3):
+                        for z in range(self.c + 3):
+                            temp_mol = deepcopy(self.molecules[m])
+                            temp_mol.atom_coord += x * self.cif.vector_a + y * self.cif.vector_b + z * self.cif.vector_c
+                            outside = True
+                            for n1 in range(len(self.molecules)):
+                                if temp_mol == self.molecules[n1]:
+                                    outside = False
+                                    break
+                            if outside:
+                                temp_list_mol.append(temp_mol)
+                r_min_len = -1
+                r_final = None
+                for n1 in range(len(temp_list_mol)):
+                    r = temp_list_mol[n1].mass_center() - self.molecules[n].mass_center()
+                    r_len = np.linalg.norm(r)
+                    if r < r_min_len:
+                        r_final = r
+                        r_min_len = r_len
+                temp_list.append(r_final)
+            self.r_matrix.append(temp_list)
 
     def multiply(self, a: int, b: int, c: int):
         mass_centers_fract = []
@@ -403,16 +422,6 @@ class Cluster:
             mols.append(temp)
         self.molecules = mols
 
-    def generate_dipole_matrix(self, mu: np.array):
-        self.dipole_matrix = np.zeros((len(self.molecules), 3))
-        for n in range(len(self.molecules)):
-            new_mu = mu
-            x_rot, y_rot, z_rot = rotation_matrix(self.molecules[n].alpha, self.molecules[n].beta, self.molecules[n].gamma)
-            transform(new_mu, x_rot)
-            transform(new_mu, y_rot)
-            transform(new_mu, z_rot)
-            self.molecules[n:n+1] = new_mu
-
     def find_rotations(self):
         orig_mol = deepcopy(self.molecules[0])
         orig_mol_fract = deepcopy(self.molecules[0])
@@ -443,12 +452,14 @@ class Cluster:
                         self.molecules[i].rotation = axis_list[i1]
                         break
 
-
     def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []
         self.cif = cif
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
         self.mass_centers = []
+        self.a = a
+        self.b = b
+        self.c = c
         self.out_translation = [(a + 1) * self.cif.vector_a, (b + 1) * self.cif.vector_b, (c + 1) * self.cif.vector_c]
         self.r_matrix = []
