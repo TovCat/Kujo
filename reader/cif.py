@@ -127,7 +127,21 @@ class Molecule:
 
 class CifFile:
 
-    def __init__(self, path=""):
+    def __init__(self):
+        self.xyz = []
+        self.cell_a = 0.0
+        self.cell_b = 0.0
+        self.cell_c = 0.0
+        self.cell_alpha = 0.0
+        self.cell_beta = 0.0
+        self.cell_gamma = 0.0
+        self.transform = np.zeros((3, 3))
+        self.rev_transform = np.zeros((3, 3))
+        self.vector_a = np.array([1, 0, 0])
+        self.vector_b = np.array([0, 1, 0])
+        self.vector_c = np.array([0, 0, 1])
+
+    def read(self, path=""):
         # trying to open CIF file and read its contents
         contents = []
         try:
@@ -137,8 +151,6 @@ class CifFile:
         except OSError:
             print("Could not open the CIF file at: ", path)
             exit(-1)
-        # init cif dictionary
-        self.xyz = []
         data = {
             "_cell_length_a": "",
             "_cell_length_b": "",
@@ -216,9 +228,9 @@ class CifFile:
                                    [0, self.cell_b * sing, self.cell_c * (cosa - cosb * cosg) / sing],
                                    [0, 0, self.cell_c * volume / sing]])
         self.rev_transform = np.linalg.inv(self.transform)
-        self.vector_a = np.transpose(np.matmul(self.transform, np.transpose([1, 0, 0])))
-        self.vector_b = np.transpose(np.matmul(self.transform, np.transpose([0, 1, 0])))
-        self.vector_c = np.transpose(np.matmul(self.transform, np.transpose([0, 0, 1])))
+        self.vector_a = np.transpose(np.matmul(self.transform, np.transpose(self.vector_a)))
+        self.vector_b = np.transpose(np.matmul(self.transform, np.transpose(self.vector_b)))
+        self.vector_c = np.transpose(np.matmul(self.transform, np.transpose(self.vector_c)))
         # extract xyz eq positions if they're not yet extracted
         if len(self.xyz) == 0:
             if data["_symmetry_space_group_name_Hall"] != "":

@@ -11,13 +11,13 @@ import time
 import energy.excitons
 
 cube = reader.cube.Cube()
-cif = None
+cif = reader.cif.CifFile()
 cluster = None
 charges = None
 orca = None
-H = None
+H = np.zeros((3, 3))
 disorders = []
-max_w = None
+max_w = -1
 hard_cutoff = 0.0
 int_cutoff = 0.0
 
@@ -58,13 +58,13 @@ def options_parse(dsp: dict, opt: list):
 def read_cube(options_dispatcher: dict):
     global cube
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    cube = reader.cube.Cube(full_path)
+    cube.read(full_path)
 
 
 def read_cif(options_dispatcher: dict):
     global cif
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    cif = reader.cif.CifFile(full_path)
+    cif.read(full_path)
 
 
 def read_charges(options_dispatcher: dict):
@@ -80,7 +80,7 @@ def read_orca(options_dispatcher: dict):
 
 
 def cube_integration_wrapper(par_list: list):
-    if max_w is not None:
+    if max_w != -1:
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
             results = executor.map(reader.cube.integrate_cubes, par_list)
             for x in results:
