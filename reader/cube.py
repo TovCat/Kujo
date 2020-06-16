@@ -59,7 +59,7 @@ def integrate_cubes(l: list):
     J = 0
     for x in range(len(c1.grid)):
         rc.transform(c1.grid[x], mol1.rotation)
-        rc.transform(c2.grid[x]. mol2.rotation)
+        rc.transform(c2.grid[x], mol2.rotation)
     for y1 in range(c1.steps[1, 0]):
         for z1 in range(c1.steps[2, 0]):
             for x2 in range(c2.steps[0, 0]):
