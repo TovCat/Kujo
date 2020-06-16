@@ -74,7 +74,7 @@ class Molecule:
         self.internal_coord = np.zeros((n, 3))
         self.threshold = 0.1
         # rotation angles with respect the first cluster molecule
-        self.rotation = np.zeros((3,3))
+        self.rotation = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     def inside(self):
         a1 = 1 + self.threshold

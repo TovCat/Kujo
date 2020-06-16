@@ -10,8 +10,8 @@ bohr = 0.529177210  # bohr in Å
 def coupling_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, mu: np.array):
     mu_1 = mu
     mu_2 = mu
-    reader.cif.transform(mu_1, mol1.rotation)
-    reader.cif.transform(mu_2, mol2.rotation)
+    mu_1 = np.transpose(np.matmul(np.transpose(mu_1), mol1.rotation))
+    mu_2 = np.transpose(np.matmul(np.transpose(mu_2), mol2.rotation))
     r = mol1.mass_center() - mol2.mass_center()
     r = r / bohr
     r1 = np.linalg.norm(r) / bohr
@@ -24,8 +24,8 @@ def coupling_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, mu: np
 def coupling_extended_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, mu: np.array, d):
     mu_1 = mu
     mu_2 = mu
-    reader.cif.transform(mu_1, mol1.rotation)
-    reader.cif.transform(mu_2, mol2.rotation)
+    mu_1 = np.transpose(np.matmul(np.transpose(mu_1), mol1.rotation))
+    mu_2 = np.transpose(np.matmul(np.transpose(mu_2), mol2.rotation))
     d = d / bohr
     q = np.linalg.norm(mu_1) / (2 * d)
     mu_trans_1 = mu_1 * (d / np.linalg.norm(mu_1))
