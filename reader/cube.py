@@ -6,7 +6,16 @@ from copy import deepcopy
 
 class Cube:
 
-    def __init__(self, path=""):
+    def __init__(self):
+        self.num_atoms = 0
+        self.steps = np.zeros((3, 1), dtype=int)
+        self.volume = np.zeros((3, 3))
+        self.origin = np.zeros((3))
+        self.voxels = np.zeros((3, 3, 3))
+        self.grid = []
+        self.dv = 0
+
+    def read(self, path=""):
         try:
             file = open(path, "r")
         except OSError:
@@ -17,8 +26,6 @@ class Cube:
         words = contents[2].split()
         self.num_atoms = int(words[0])
         self.origin = np.array([float(words[1]), float(words[2]), float(words[3])])
-        self.steps = np.zeros((3, 1), dtype=int)
-        self.volume = np.zeros((3, 3))
         for i in range(3):
             words = contents[i + 3].split()
             self.steps[i, 0] = int(words[0])
@@ -42,7 +49,6 @@ class Cube:
                     n = z + y * self.steps[2, 0] + x * self.steps[1, 0] * self.steps[2, 0]
                     self.voxels[x, y, z] = sep_contents[n]
         self.dv = self.volume[0, 0] * self.volume[1, 1] * self.volume[2, 2]
-        self.grid = []
         for x in range(self.steps[0, 0]):
             for y in range(self.steps[1, 0]):
                 for z in range(self.steps[2, 0]):

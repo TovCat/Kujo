@@ -10,7 +10,7 @@ import reader.cif
 import time
 import energy.excitons
 
-cube = None
+cube = reader.cube.Cube()
 cif = None
 cluster = None
 charges = None
