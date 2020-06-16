@@ -422,6 +422,28 @@ dispatcher = {
     "print_cluster_xyz_premolecules": print_cluster_xyz_premolecules
 }
 
+options_list = {
+    "read_cube": ["file"],
+    "read_cif": ["file"],
+    "read_charges": ["file"],
+    "read_orca": ["file"],
+    "translated_coupling_td_integration": ["vector", "vector_cif", "multiplier"],
+    "set_hard_cutoff": ["value"],
+    "set_int_cutoff": ["value"],
+    "set_max_workers": ["value"],
+    "build_cluster": ["a", "b", "c"],
+    "translated_coupling_extended_dipole": ["vector", "vector_cif", "multiplier", "d", "mu_x", "mu_y", "mu_z"],
+    "translated_coupling_dipole": ["vector", "vector_cif", "multiplier", "d", "mu_x", "mu_y", "mu_z"],
+    "translated_coupling_charges": ["vector", "vector_cif", "multiplier"],
+    "generate_disorder": ["sigma", "n"],
+    "calculate_coupling": ["method", "site1", "site2", "mu_x", "mu_y", "mu_z", "d", "mo11", "mol2"],
+    "calculate_hamiltonian": ["method", "periodic", "mu_x", "mu_y", "mu_z", "d"],
+    "print_dimer_wrapper": ["site1", "site2"],
+    "print_cluster_xyz": [],
+    "print_cluster_xyz_premolecules": []
+}
+
+
 if __name__ == "__main__":
     execute_time = time.time()
     instructions, options = utility.kujo_io.read_input("input.txt")
@@ -430,7 +452,12 @@ if __name__ == "__main__":
     for i in range(len(instructions)):
         str_execute_time = time.time()
         if len(options) != 0:
-            result = dispatcher[instructions[i]](options[i])
+            opt_to_method = {}
+            l = options_list[instructions[i]]
+            for i1 in range(len(l)):
+                opt_to_method[l[i]] = ""
+            options_parse(opt_to_method, options[i])
+            result = dispatcher[instructions[i]](opt_to_method)
         else:
             result = dispatcher[instructions[i]]()
         full_path = getcwd() + out
