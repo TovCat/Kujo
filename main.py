@@ -144,7 +144,8 @@ def build_cluster(options_dispatcher: dict):
         cluster.build_rmc()
 
 
-def translated_coupling_extended_dipole(options_dispatcher: dict):
+def start_dipole_extended_dipole(options_dispatcher: dict):
+    options_dispatcher_temp = deepcopy(options_dispatcher)
     if options_dispatcher["vector_cif"] == "a":
         t = cif.vector_a * options_dispatcher["multiplier"]
     elif options_dispatcher["vector_cif"] == "b":
@@ -159,33 +160,23 @@ def translated_coupling_extended_dipole(options_dispatcher: dict):
         mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
     else:
         mu = orca.mu
+    return t, mu
+
+
+def translated_coupling_extended_dipole(options_dispatcher: dict):
+    t, mu, d = start_dipole_extended_dipole(options_dispatcher)
+    d = options_dispatcher["d"]
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
     mol2.atom_coord = mol2.atom_coord + t
-    d = options_dispatcher["d"]
     return energy.excitons.coupling_extended_dipole(mol1, mol2, mu, d)
 
 
 def translated_coupling_dipole(options_dispatcher: dict):
-    global cif
-    if options_dispatcher["vector_cif"] == "a":
-        t = cif.vector_a * options_dispatcher["multiplier"]
-    elif options_dispatcher["vector_cif"] == "b":
-        t = cif.vector_b * options_dispatcher["multiplier"]
-    elif options_dispatcher["vector_cif"] == "c":
-        t = cif.vector_c * options_dispatcher["multiplier"]
-    elif options_dispatcher["vector"] is not None:
-        t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
-    else:
-        exit(-1)
-    if options_dispatcher["mu_x"] != 0.0 and options_dispatcher["mu_y"] != 0.0 and options_dispatcher["mu_z"] != 0.0:
-        mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
-    else:
-        mu = orca.mu
+    t, mu = start_dipole_extended_dipole(options_dispatcher)
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
     mol2.atom_coord = mol2.atom_coord + t
-    r = mol1.mass_center() - mol2.mass_center()
     return energy.excitons.coupling_dipole(mol1, mol2, mu)
 
 
