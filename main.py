@@ -24,61 +24,61 @@ int_cutoff = 0.0
 
 
 def options_parse(dsp: dict, opt: list):
-    for i1 in range(0, len(opt), 2):
-        if opt[i1] in dsp:
-            if opt[i1 + 1].lower() == "true":
-                dsp[opt[i1]] = True
-            elif opt[i1 + 1].lower() == "false":
-                dsp[opt[i1]] = False
+    for i_op in range(0, len(opt), 2):
+        if opt[i_op] in dsp:
+            if opt[i_op + 1].lower() == "true":
+                dsp[opt[i_op]] = True
+            elif opt[i_op + 1].lower() == "false":
+                dsp[opt[i_op]] = False
             else:
                 try:
-                    i = int(opt[i1 + 1])
-                    dsp[opt[i1]] = i
+                    i_test = int(opt[i_op + 1])
+                    dsp[opt[i_op]] = i_test
                 except ValueError:
                     try:
-                        fl = float(opt[i1 + 1])
-                        dsp[opt[i1]] = fl
+                        fl = float(opt[i_op + 1])
+                        dsp[opt[i_op]] = fl
                     except ValueError:
-                        if "[" in opt[i1 + 1] or "]" in opt[i1 + 1]:
-                            opt[i1 + 1].replace("[", "")
-                            opt[i1 + 1].replace("]", "")
-                            words = opt[i1 + 1].split(",")
+                        if "[" in opt[i_op + 1] or "]" in opt[i_op + 1]:
+                            opt[i_op + 1].replace("[", "")
+                            opt[i_op + 1].replace("]", "")
+                            words = opt[i_op + 1].split(",")
                             temp = np.zeros([len(words), 1])
                             try:
-                                for i in range(len(words)):
-                                    temp[i, 0] = float(words[i])
-                                dsp[opt[i1]] = temp
+                                for i_op2 in range(len(words)):
+                                    temp[i_op2, 0] = float(words[i])
+                                dsp[opt[i_op]] = temp
                             except ValueError:
                                 exit(-1)
                         else:
-                            dsp[opt[i1]] = opt[i1 + 1]
+                            dsp[opt[i_op]] = opt[i_op + 1]
         else:
             exit(-1)
 
 
 def read_cube(options_dispatcher: dict):
     global cube
-    full_path = getcwd() + f"/{options_dispatcher['file']}"
-    cube.read(full_path)
+    full_path_cube = getcwd() + f"/{options_dispatcher['file']}"
+    cube.read(full_path_cube)
 
 
 def read_cif(options_dispatcher: dict):
     global cif
-    full_path = getcwd() + f"/{options_dispatcher['file']}"
-    cif.read(full_path)
+    full_path_cif = getcwd() + f"/{options_dispatcher['file']}"
+    cif.read(full_path_cif)
     cluster.init_cif(cif)
 
 
 def read_charges(options_dispatcher: dict):
     global charges
-    full_path = getcwd() + f"/{options_dispatcher['file']}"
-    charges.read(full_path)
+    full_path_charges = getcwd() + f"/{options_dispatcher['file']}"
+    charges.read(full_path_charges)
 
 
 def read_orca(options_dispatcher: dict):
     global orca
-    full_path = getcwd() + f"/{options_dispatcher['file']}"
-    orca.read(full_path)
+    full_path_orca = getcwd() + f"/{options_dispatcher['file']}"
+    orca.read(full_path_orca)
 
 
 def cube_integration_wrapper(par_list: list):
@@ -105,14 +105,14 @@ def translated_coupling_td_integration(options_dispatcher: dict):
     elif options_dispatcher["vector"] is not None:
         translate = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
+        translate = 0
         exit(-1)
-    r = 0.0
     it = []
     mol1 = deepcopy(cube.molecule)
     mol2 = deepcopy(cube.molecule)
     mol2.atom_coord = mol2.atom_coord + translate
-    for i1 in range(cube.steps[0, 0]):
-        it.append([mol1, mol2, cube, i1])
+    for i_c in range(cube.steps[0, 0]):
+        it.append([mol1, mol2, cube, i_c])
     return cube_integration_wrapper(it)
 
 
@@ -134,9 +134,7 @@ def set_max_workers(options_dispatcher: dict):
 def build_cluster(options_dispatcher: dict):
     global cluster
     global cif
-    cluster = reader.cif.Cluster(cif, options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])
     cluster.build()
-    it = []
     cluster.to_cartesian()
     if not ("print_cluster_xyz_premolecules" in instructions):
         cluster.connectivity()
@@ -156,6 +154,7 @@ def start_dipole_extended_dipole(options_dispatcher: dict):
     elif options_dispatcher["vector"] is not None:
         t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
+        t = 0
         exit(-1)
     if options_dispatcher["mu_x"] != 0.0 and options_dispatcher["mu_y"] != 0.0 and options_dispatcher["mu_z"] != 0.0:
         mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
@@ -191,6 +190,7 @@ def translated_coupling_charges(options_dispatcher: dict):
     elif options_dispatcher["vector"] is not None:
         t = options_dispatcher["vector"] * options_dispatcher["multiplier"]
     else:
+        t = 0
         exit(-1)
     mol1 = charges.mol
     mol2 = deepcopy(mol1)
@@ -201,7 +201,7 @@ def translated_coupling_charges(options_dispatcher: dict):
 def generate_disorder(options_dispatcher: dict):
     global disorders
     n = H.shape[0]
-    for i in range(options_dispatcher["n"]):
+    for i_d in range(options_dispatcher["n"]):
         disorders.append(energy.excitons.diagonal_disorder_sample(n, options_dispatcher["sigma"]))
 
 
@@ -212,6 +212,7 @@ def calculate_coupling(options_dispatcher: dict):
     else:
         mol1 = options_dispatcher["mol1"]
         mol2 = options_dispatcher["mol2"]
+    mu = np.zeros((3))
     if options_dispatcher["mu_x"] == 0.0 and options_dispatcher["mu_y"] == 0.0 and options_dispatcher["mu_z"]:
         if options_dispatcher["method"] != "charges" and options_dispatcher["method"] != "integration":
             mu = orca.mu
@@ -254,31 +255,31 @@ def print_dimer_wrapper(options_dispatcher: dict):
 
 
 def print_cluster_xyz(options_dispatcher: dict):
-    full_path = getcwd()
-    file = open(full_path + "/cluster.xyz", "w")
-    total_number = 0
+    full_path_xyz = getcwd()
+    file_xyz = open(full_path_xyz + "/cluster.xyz", "w")
+    total_number_xyz = 0
     for n in range(len(cluster.molecules)):
-        total_number += cluster.molecules[n].num_atoms
-    file.write(repr(total_number) + "\n")
-    file.write("XYZ file of molecular cluster generated in Kujo\n")
+        total_number_xyz += cluster.molecules[n].num_atoms
+    file_xyz.write(repr(total_number_xyz) + "\n")
+    file_xyz.write("XYZ file of molecular cluster generated in Kujo\n")
     for n in range(len(cluster.molecules)):
         for m in range(cluster.molecules[n].num_atoms):
             l = cluster.molecules[n].atom_label[m]
             x = repr(round(cluster.molecules[n].atom_coord[m, 0], 6))
             y = repr(round(cluster.molecules[n].atom_coord[m, 1], 6))
             z = repr(round(cluster.molecules[n].atom_coord[m, 2], 6))
-            file.write(f'{l}   {x}   {y}   {z}\n')
-    file.close()
+            file_xyz.write(f'{l}   {x}   {y}   {z}\n')
+    file_xyz.close()
 
 
 def print_cluster_xyz_premolecules(options_dispatcher: dict):
-    full_path = getcwd()
-    file = open(full_path + "/cluster_premolecules.xyz", "w")
-    total_number = 0
+    full_path_xyz = getcwd()
+    file_xyz = open(full_path_xyz + "/cluster_premolecules.xyz", "w")
+    total_number_xyz = 0
     for n in range(len(cluster.pre_molecules)):
-        total_number += cluster.pre_molecules[n].num_atoms
-    file.write(repr(total_number) + "\n")
-    file.write("XYZ file of molecular cluster generated in Kujo\n")
+        total_number_xyz += cluster.pre_molecules[n].num_atoms
+    file_xyz.write(repr(total_number_xyz) + "\n")
+    file_xyz.write("XYZ file of molecular cluster generated in Kujo\n")
     for n in range(len(cluster.pre_molecules)):
         for m in range(cluster.pre_molecules[n].num_atoms):
             l = cluster.pre_molecules[n].atom_label[m]
@@ -286,7 +287,7 @@ def print_cluster_xyz_premolecules(options_dispatcher: dict):
             y = repr(round(cluster.pre_molecules[n].atom_coord[m, 1], 6))
             z = repr(round(cluster.pre_molecules[n].atom_coord[m, 2], 6))
             file.write(f'{l}   {x}   {y}   {z}\n')
-    file.close()
+    file_xyz.close()
 
 
 def calculate_participation_ratio(options_dispatcher: dict):
@@ -301,6 +302,7 @@ def calculate_participation_ratio(options_dispatcher: dict):
     for i in range(len(p)):
         p_sum += p[i]
     return p_sum / len(p)
+
 
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
