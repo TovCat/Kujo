@@ -9,6 +9,7 @@ import reader.orca
 import reader.cif
 import time
 import energy.excitons
+import energy.diffusion
 
 cube = reader.cube.Cube()
 cif = reader.cif.CifFile()
@@ -288,6 +289,19 @@ def print_cluster_xyz_premolecules(options_dispatcher: dict):
     file.close()
 
 
+def calculate_participation_ratio(options_dispatcher: dict):
+    p = []
+    if len(disorders) != 0:
+        for i in range(len(disorders)):
+            for n in H.shape[0]:
+                H[n, n] = disorders[i][n]
+            E, c = np.linalg.eig(H)
+            p.append(energy.diffusion.participation_ratio(H, E, c))
+    p_sum = 0
+    for i in range(len(p)):
+        p_sum += p[i]
+    return p_sum / len(p)
+
 dispatcher = {
     "translated_coupling_td_integration": translated_coupling_td_integration,
     "translated_coupling_extended_dipole": translated_coupling_extended_dipole,
@@ -306,7 +320,8 @@ dispatcher = {
     "calculate_coupling": calculate_coupling,
     "print_dimer": utility.kujo_io.print_dimer,
     "print_cluster_xyz": print_cluster_xyz,
-    "print_cluster_xyz_premolecules": print_cluster_xyz_premolecules
+    "print_cluster_xyz_premolecules": print_cluster_xyz_premolecules,
+    "calculate_participation_ratio": calculate_participation_ratio
 }
 
 options_list = {
@@ -327,7 +342,8 @@ options_list = {
     "calculate_hamiltonian": ["method", "periodic", "mu_x", "mu_y", "mu_z", "d"],
     "print_dimer_wrapper": ["site1", "site2"],
     "print_cluster_xyz": [],
-    "print_cluster_xyz_premolecules": []
+    "print_cluster_xyz_premolecules": [],
+    "calculate_participation_ratio": []
 }
 
 
