@@ -12,7 +12,7 @@ import energy.excitons
 
 cube = reader.cube.Cube()
 cif = reader.cif.CifFile()
-cluster = None
+cluster = reader.cif.Cluster()
 charges = reader.charges.Charges()
 orca = reader.orca.Orca()
 H = np.zeros((3, 3))
@@ -65,6 +65,7 @@ def read_cif(options_dispatcher: dict):
     global cif
     full_path = getcwd() + f"/{options_dispatcher['file']}"
     cif.read(full_path)
+    cluster.init_cif(cif)
 
 
 def read_charges(options_dispatcher: dict):

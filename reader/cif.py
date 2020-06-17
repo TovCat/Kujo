@@ -324,6 +324,9 @@ class Cluster:
             self.r_matrix.append(temp_list)
 
     def multiply(self, a: int, b: int, c: int):
+        self.a = a
+        self.b = b
+        self.c = c
         mass_centers_fract = []
         for i in range(len(self.molecules)):
             t = np.transpose(self.molecules[i].mass_center())
@@ -464,14 +467,16 @@ class Cluster:
                         self.molecules[i].rotation = axis_list[i1]
                         break
 
+    def init_cif(self, c: CifFile):
+        self.cif = c
+
     def __init__(self, cif: CifFile, a, b, c):
         self.pre_molecules = []
-        self.cif = cif
+        self.cif = CifFile
         self.pre_molecules.append(self.cif.asym_unit)
         self.molecules = []
         self.mass_centers = []
-        self.a = a
-        self.b = b
-        self.c = c
-        self.out_translation = [(a + 1) * self.cif.vector_a, (b + 1) * self.cif.vector_b, (c + 1) * self.cif.vector_c]
+        self.a = 0
+        self.b = 0
+        self.c = 0
         self.r_matrix = []
