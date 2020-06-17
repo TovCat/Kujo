@@ -76,7 +76,6 @@ def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: list, u: np.arra
     """
     Haken–Strobl–Reineker model
     """
-    Z = 0.0
     D = 0.0
     exp_sum = 0.0
     for n in range(H.shape[0]):

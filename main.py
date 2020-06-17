@@ -255,38 +255,32 @@ def print_dimer_wrapper(options_dispatcher: dict):
 
 
 def print_cluster_xyz(options_dispatcher: dict):
+    def print_cluster(mol: reader.cif.Molecule, f):
+        for m in range(mol.num_atoms):
+            l = mol.atom_label[m]
+            x = repr(round(mol.atom_coord[m, 0], 6))
+            y = repr(round(mol.atom_coord[m, 1], 6))
+            z = repr(round(mol.atom_coord[m, 2], 6))
+            f.write(f'{l}   {x}   {y}   {z}\n')
+    
     full_path_xyz = getcwd()
     file_xyz = open(full_path_xyz + "/cluster.xyz", "w")
-    total_number_xyz = 0
-    for n in range(len(cluster.molecules)):
-        total_number_xyz += cluster.molecules[n].num_atoms
+    if options_dispatcher["mode"] == "premolecules":
+        total_number_xyz = 0
+        for n in range(len(cluster.pre_molecules)):
+            total_number_xyz += cluster.pre_molecules[n].num_atoms
+    else:
+        total_number_xyz = 0
+        for n in range(len(cluster.molecules)):
+            total_number_xyz += cluster.molecules[n].num_atoms
     file_xyz.write(repr(total_number_xyz) + "\n")
     file_xyz.write("XYZ file of molecular cluster generated in Kujo\n")
-    for n in range(len(cluster.molecules)):
-        for m in range(cluster.molecules[n].num_atoms):
-            l = cluster.molecules[n].atom_label[m]
-            x = repr(round(cluster.molecules[n].atom_coord[m, 0], 6))
-            y = repr(round(cluster.molecules[n].atom_coord[m, 1], 6))
-            z = repr(round(cluster.molecules[n].atom_coord[m, 2], 6))
-            file_xyz.write(f'{l}   {x}   {y}   {z}\n')
-    file_xyz.close()
-
-
-def print_cluster_xyz_premolecules(options_dispatcher: dict):
-    full_path_xyz = getcwd()
-    file_xyz = open(full_path_xyz + "/cluster_premolecules.xyz", "w")
-    total_number_xyz = 0
-    for n in range(len(cluster.pre_molecules)):
-        total_number_xyz += cluster.pre_molecules[n].num_atoms
-    file_xyz.write(repr(total_number_xyz) + "\n")
-    file_xyz.write("XYZ file of molecular cluster generated in Kujo\n")
-    for n in range(len(cluster.pre_molecules)):
-        for m in range(cluster.pre_molecules[n].num_atoms):
-            l = cluster.pre_molecules[n].atom_label[m]
-            x = repr(round(cluster.pre_molecules[n].atom_coord[m, 0], 6))
-            y = repr(round(cluster.pre_molecules[n].atom_coord[m, 1], 6))
-            z = repr(round(cluster.pre_molecules[n].atom_coord[m, 2], 6))
-            file.write(f'{l}   {x}   {y}   {z}\n')
+    if options_dispatcher["mode"] == "premolecules":
+        for n in range(len(cluster.pre_molecules)):
+            print_cluster(cluster.pre_molecules[n], file_xyz)
+    else:
+        for n in range(len(cluster.molecules)):
+            print_cluster(cluster.molecules[n], file_xyz)
     file_xyz.close()
 
 
@@ -299,9 +293,43 @@ def calculate_participation_ratio(options_dispatcher: dict):
             E, c = np.linalg.eig(H)
             p.append(energy.diffusion.participation_ratio(H, E, c))
     p_sum = 0
-    for i in range(len(p)):
-        p_sum += p[i]
+    for i_pr in range(len(p)):
+        p_sum += p[i_pr]
     return p_sum / len(p)
+
+
+def calculate_diffusion(options_dispatcher: dict):
+    if options_dispatcher["mode"] == "xy" or options_dispatcher["mode"] == "yz" or options_dispatcher["mode"] == "xz":
+        distribution = energy.diffusion.distribute_over_plane(options_dispatcher["mode"], options_dispatcher["bins"])
+    elif options_dispatcher["mode"] == "sphere":
+        distribution = energy.diffusion.distribute_over_sphere(options_dispatcher["bins"])
+    else:
+        distribution = []
+        exit(-1)
+    T = options_dispatcher["temperature"]
+    gamma = options_dispatcher["gamma"]
+    par_list = []
+    for i_outer in range(len(disorders)):
+        H_disorder = H
+        for i_d in range(len(H.shape[0])):
+            H_disorder[i_d, i_d] = disorders[i_outer][i_d]
+        E, c = np.linalg.eig(H_disorder)
+        for i_cd in range(len(distribution)):
+            if options_dispatcher["thermal"]:
+                par_list.append([H_disorder, E, c, cluster.r_matrix, ])
+            else:
+
+        if max_w != -1:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+                results = executor.map(reader.cube.integrate_cubes, par_list)
+                for x in results:
+                    r = r + x
+        else:
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                results = executor.map(reader.cube.integrate_cubes, par_list)
+                for x in results:
+                    r = r + x
+
 
 
 dispatcher = {
@@ -322,7 +350,6 @@ dispatcher = {
     "calculate_coupling": calculate_coupling,
     "print_dimer": utility.kujo_io.print_dimer,
     "print_cluster_xyz": print_cluster_xyz,
-    "print_cluster_xyz_premolecules": print_cluster_xyz_premolecules,
     "calculate_participation_ratio": calculate_participation_ratio
 }
 
@@ -343,8 +370,7 @@ options_list = {
     "calculate_coupling": ["method", "site1", "site2", "mu_x", "mu_y", "mu_z", "d", "mo11", "mol2"],
     "calculate_hamiltonian": ["method", "periodic", "mu_x", "mu_y", "mu_z", "d"],
     "print_dimer_wrapper": ["site1", "site2"],
-    "print_cluster_xyz": [],
-    "print_cluster_xyz_premolecules": [],
+    "print_cluster_xyz": ["mode"],
     "calculate_participation_ratio": []
 }
 
