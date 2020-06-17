@@ -61,18 +61,18 @@ def distribute_over_sphere(bins):
     return distribution
 
 
-def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.array, gamma):
+def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: list, u: np.array, gamma):
     D = 0.0
     for n in range(H.shape[0]):
         for m in range(H.shape[0]):
             for n_j in range(H.shape[0]):
                 for m_j in range(H.shape[0]):
-                    j = np.inner(u, r[n, m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
+                    j = np.inner(u, r[n][m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
                     D += (gamma / (gamma ** 2 + (E[n] / A - E[m] / A) ** 2)) * (j ** 2)
     return D / H.shape[0]
 
 
-def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.array, gamma, T):
+def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: list, u: np.array, gamma, T):
     """
     Haken–Strobl–Reineker model
     """
@@ -86,6 +86,6 @@ def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: np.array, u: np.
             for n_j in range(H.shape[0]):
                 for m_j in range(H.shape[0]):
                     pre_coeff = gamma / (gamma ** 2 + (E[n] - E[m]) ** 2)
-                    j = np.inner(u, r[n, m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
+                    j = np.inner(u, r[n][m] / bohr) * (H[n_j, m_j] / A) * c[n, n_j] * c[m, m_j]
                     D += pre_coeff * j * j * exponent
         return D / exp_sum
