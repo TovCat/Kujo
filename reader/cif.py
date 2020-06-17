@@ -469,11 +469,12 @@ class Cluster:
 
     def init_cif(self, c: CifFile):
         self.cif = c
+        self.pre_molecules.append(self.cif.asym_unit)
 
-    def __init__(self, cif: CifFile, a, b, c):
+    def __init__(self):
         self.pre_molecules = []
         self.cif = CifFile
-        self.pre_molecules.append(self.cif.asym_unit)
+        self.pre_molecules
         self.molecules = []
         self.mass_centers = []
         self.a = 0
