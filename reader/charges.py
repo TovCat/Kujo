@@ -4,7 +4,10 @@ import numpy as np
 
 class Charges:
 
-    def __init__(self, file):
+    def __init__(self):
+        self_q = np.zeros((3))
+
+    def read(self, file):
         file = open(file, "r")
         contents = file.readlines()
         file.close()

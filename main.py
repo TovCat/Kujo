@@ -13,7 +13,7 @@ import energy.excitons
 cube = reader.cube.Cube()
 cif = reader.cif.CifFile()
 cluster = None
-charges = None
+charges = reader.charges.Charges()
 orca = None
 H = np.zeros((3, 3))
 disorders = []
@@ -70,7 +70,7 @@ def read_cif(options_dispatcher: dict):
 def read_charges(options_dispatcher: dict):
     global charges
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    charges = reader.charges.Charges(full_path)
+    charges.read(full_path)
 
 
 def read_orca(options_dispatcher: dict):
@@ -163,7 +163,7 @@ def start_dipole_extended_dipole(options_dispatcher: dict):
 
 
 def translated_coupling_extended_dipole(options_dispatcher: dict):
-    t, mu, d = start_dipole_extended_dipole(options_dispatcher)
+    t, mu = start_dipole_extended_dipole(options_dispatcher)
     d = options_dispatcher["d"]
     mol1 = cluster.molecules[0]
     mol2 = deepcopy(mol1)
