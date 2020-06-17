@@ -241,12 +241,10 @@ def calculate_hamiltonian(options_dispatcher: dict):
             mol2 = deepcopy(mol1)
             mol2.atom_coord += cluster.r_matrix[n][m]
             reader.cif.transform(mol2, mol2.rotation)
-            v_out = v
-            v_out.append("mol1")
-            v_out.append(mol1)
-            v_out.append("mol2")
-            v_out.append(mol2)
-            H[n, m] = calculate_coupling(v_out)
+            dict_out = options_dispatcher
+            dict_out["mol1"] = mol1
+            dict_out["mol2"] = mol2
+            H[n, m] = calculate_coupling(dict_out)
             H[m, n] = H[n, m]
 
 
