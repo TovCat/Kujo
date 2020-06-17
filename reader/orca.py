@@ -4,12 +4,14 @@ import reader.cif
 
 class Orca:
 
-    def __init__(self, path=""):
+    def __init__(self):
+        self.mu = np.zeros((1, 3))
+
+    def read(self, path=""):
         file = open(path, "r")
         contents = file.readlines()
         file.close()
         index = -1
-        self.mu = np.zeros((1, 3))
         for x in contents:
             index = index + 1
             x.strip()

@@ -14,7 +14,7 @@ cube = reader.cube.Cube()
 cif = reader.cif.CifFile()
 cluster = None
 charges = reader.charges.Charges()
-orca = None
+orca = reader.orca.Orca()
 H = np.zeros((3, 3))
 disorders = []
 max_w = -1
@@ -76,7 +76,7 @@ def read_charges(options_dispatcher: dict):
 def read_orca(options_dispatcher: dict):
     global orca
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    orca = reader.orca.Orca(full_path)
+    orca.read(full_path)
 
 
 def cube_integration_wrapper(par_list: list):
