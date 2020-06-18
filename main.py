@@ -309,26 +309,47 @@ def calculate_diffusion(options_dispatcher: dict):
     T = options_dispatcher["temperature"]
     gamma = options_dispatcher["gamma"]
     par_list = []
+    diffusion_different_samples = []
     for i_outer in range(len(disorders)):
         H_disorder = H
+        diffusion_specific_disorder = []
         for i_d in range(len(H.shape[0])):
             H_disorder[i_d, i_d] = disorders[i_outer][i_d]
         E, c = np.linalg.eig(H_disorder)
         for i_cd in range(len(distribution)):
             if options_dispatcher["thermal"]:
-                par_list.append([H_disorder, E, c, cluster.r_matrix, ])
+                par_list.append([H_disorder, E, c, cluster.r_matrix, distribution[i_cd], gamma, T])
             else:
-
+                par_list.append([H_disorder, E, c, cluster.r_matrix, distribution[i_cd], gamma])
         if max_w != -1:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
-                results = executor.map(reader.cube.integrate_cubes, par_list)
-                for x in results:
-                    r = r + x
+            if options_dispatcher["thermal"]:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+                    results = executor.map(energy.diffusion.diffusion_thermal, par_list)
+                    for x in results:
+                        diffusion_specific_disorder.append(x)
+            else:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+                    results = executor.map(energy.diffusion.diffusion_no_thermal, par_list)
+                    for x in results:
+                        diffusion_specific_disorder.append(x)
         else:
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                results = executor.map(reader.cube.integrate_cubes, par_list)
-                for x in results:
-                    r = r + x
+            if options_dispatcher["thermal"]:
+                with concurrent.futures.ProcessPoolExecutor() as executor:
+                    results = executor.map(energy.diffusion.diffusion_thermal, par_list)
+                    for x in results:
+                        diffusion_specific_disorder.append(x)
+            else:
+                with concurrent.futures.ProcessPoolExecutor() as executor:
+                    results = executor.map(energy.diffusion.diffusion_no_thermal, par_list)
+                    for x in results:
+                        diffusion_specific_disorder.append(x)
+        diffusion_different_samples.append(diffusion_specific_disorder)
+    diffusion_final = []
+    for i_inner in range(options_dispatcher["bins"]):
+        sum = 0
+        for i_outer in range(len(disorders)):
+            sum += diffusion_different_samples[i_outer][i_inner]
+        diffusion_final.append(sum / len(disorders))
 
 
 
