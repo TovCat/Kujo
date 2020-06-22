@@ -200,6 +200,7 @@ def translated_coupling_charges(options_dispatcher: dict):
 
 def generate_disorder(options_dispatcher: dict):
     global disorders
+    disorders = []
     n = len(cluster.molecules)
     for i_d in range(options_dispatcher["n"]):
         disorders.append(energy.excitons.diagonal_disorder_sample(n, options_dispatcher["sigma"]))
@@ -287,7 +288,7 @@ def calculate_participation_ratio(options_dispatcher: dict):
     p = []
     if len(disorders) != 0:
         for i in range(len(disorders)):
-            for n in H.shape[0]:
+            for n in range(len(cluster.molecules)):
                 H[n, n] = disorders[i][n]
             E, c = np.linalg.eig(H)
             p.append(energy.diffusion.participation_ratio(H, E, c))
