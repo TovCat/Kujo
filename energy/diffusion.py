@@ -61,7 +61,13 @@ def distribute_over_sphere(bins):
     return distribution
 
 
-def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: list, u: np.array, gamma):
+def diffusion_no_thermal(opt_list: list):
+    H = opt_list[0]
+    E = opt_list[1]
+    c = opt_list[2]
+    r = opt_list[3]
+    u = opt_list[4]
+    gamma = opt_list[5]
     D = 0.0
     for n in range(H.shape[0]):
         for m in range(H.shape[0]):
@@ -72,10 +78,17 @@ def diffusion_no_thermal(H: np.array, E: np.array, c: np.array, r: list, u: np.a
     return D / H.shape[0]
 
 
-def diffusion_thermal(H: np.array, E: np.array, c: np.array, r: list, u: np.array, gamma, T):
+def diffusion_thermal(opt_list: list):
     """
     Haken–Strobl–Reineker model
     """
+    H = opt_list[0]
+    E = opt_list[1]
+    c = opt_list[2]
+    r = opt_list[3]
+    u = opt_list[4]
+    gamma = opt_list[5]
+    T = opt_list[6]
     D = 0.0
     exp_sum = 0.0
     for n in range(H.shape[0]):
