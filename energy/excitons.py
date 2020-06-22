@@ -44,8 +44,6 @@ def coupling_extended_dipole(mol1: reader.cif.Molecule, mol2: reader.cif.Molecul
 
 
 def coupling_charges(mol1: reader.cif.Molecule, mol2: reader.cif.Molecule, q):
-    reader.cif.transform(mol1.atom_coord, mol1.rotation)
-    reader.cif.transform(mol2.atom_coord, mol2.rotation)
     J = 0.0
     for n in range(mol1.num_atoms):
         for m in range(mol2.num_atoms):

@@ -200,7 +200,7 @@ def translated_coupling_charges(options_dispatcher: dict):
 
 def generate_disorder(options_dispatcher: dict):
     global disorders
-    n = H.shape[0]
+    n = len(cluster.molecules)
     for i_d in range(options_dispatcher["n"]):
         disorders.append(energy.excitons.diagonal_disorder_sample(n, options_dispatcher["sigma"]))
 
@@ -213,9 +213,9 @@ def calculate_coupling(options_dispatcher: dict):
         mol1 = options_dispatcher["mol1"]
         mol2 = options_dispatcher["mol2"]
     mu = np.zeros((3))
-    if options_dispatcher["mu_x"] == 0.0 and options_dispatcher["mu_y"] == 0.0 and options_dispatcher["mu_z"]:
-        if options_dispatcher["method"] != "charges" and options_dispatcher["method"] != "integration":
-            mu = orca.mu
+    if options_dispatcher["mu_x"] == 0.0 and options_dispatcher["mu_y"] == 0.0 and options_dispatcher["mu_z"] \
+            and options_dispatcher["method"] != "charges" and options_dispatcher["method"] != "integration":
+        mu = orca.mu
     else:
         mu = np.array([options_dispatcher["mu_x"], options_dispatcher["mu_y"], options_dispatcher["mu_z"]])
     if options_dispatcher["method"] == "dipole":
@@ -237,12 +237,11 @@ def calculate_hamiltonian(options_dispatcher: dict):
         cluster.build_rmc_periodic()
     else:
         cluster.build_rmc()
+    H = np.zeros((len(cluster.molecules), len(cluster.molecules)))
     for n in range(len(cluster.molecules)):
         for m in range(n + 1, len(cluster.molecules)):
-            mol1 = deepcopy(cluster.molecules(n))
-            mol2 = deepcopy(mol1)
-            mol2.atom_coord += cluster.r_matrix[n][m]
-            reader.cif.transform(mol2, mol2.rotation)
+            mol1 = deepcopy(cluster.molecules[n])
+            mol2 = deepcopy(cluster.molecules[m])
             dict_out = options_dispatcher
             dict_out["mol1"] = mol1
             dict_out["mol2"] = mol2
@@ -371,7 +370,8 @@ dispatcher = {
     "calculate_coupling": calculate_coupling,
     "print_dimer": utility.kujo_io.print_dimer,
     "print_cluster_xyz": print_cluster_xyz,
-    "calculate_participation_ratio": calculate_participation_ratio
+    "calculate_participation_ratio": calculate_participation_ratio,
+    "calculate_hamiltonian": calculate_hamiltonian
 }
 
 options_list = {
@@ -407,7 +407,7 @@ if __name__ == "__main__":
             opt_to_method = {}
             l = options_list[instructions[i]]
             for i1 in range(len(l)):
-                opt_to_method[l[i]] = ""
+                opt_to_method[l[i1]] = ""
             options_parse(opt_to_method, options[i])
             result = dispatcher[instructions[i]](opt_to_method)
         else:
