@@ -303,6 +303,12 @@ def calculate_diffusion(options_dispatcher: dict):
         distribution = energy.diffusion.distribute_over_plane(options_dispatcher["mode"], options_dispatcher["bins"])
     elif options_dispatcher["mode"] == "sphere":
         distribution = energy.diffusion.distribute_over_sphere(options_dispatcher["bins"])
+    elif options_dispatcher["mode"] == "a":
+        distribution = [np.array([1, 0, 0])]
+    elif options_dispatcher["mode"] == "b":
+        distribution = [np.array([0, 1, 0])]
+    elif options_dispatcher["mode"] == "a":
+        distribution = [np.array([0, 0, 1])]
     else:
         distribution = []
         exit(-1)
@@ -313,7 +319,7 @@ def calculate_diffusion(options_dispatcher: dict):
     for i_outer in range(len(disorders)):
         H_disorder = H
         diffusion_specific_disorder = []
-        for i_d in range(len(H.shape[0])):
+        for i_d in range(len(cluster.molecules)):
             H_disorder[i_d, i_d] = disorders[i_outer][i_d]
         E, c = np.linalg.eig(H_disorder)
         for i_cd in range(len(distribution)):
@@ -350,7 +356,7 @@ def calculate_diffusion(options_dispatcher: dict):
         for i_outer in range(len(disorders)):
             sum += diffusion_different_samples[i_outer][i_inner]
         diffusion_final.append(sum / len(disorders))
-
+    return diffusion_final
 
 
 dispatcher = {
@@ -372,7 +378,8 @@ dispatcher = {
     "print_dimer": utility.kujo_io.print_dimer,
     "print_cluster_xyz": print_cluster_xyz,
     "calculate_participation_ratio": calculate_participation_ratio,
-    "calculate_hamiltonian": calculate_hamiltonian
+    "calculate_hamiltonian": calculate_hamiltonian,
+    "calculate_diffusion": calculate_diffusion
 }
 
 options_list = {
@@ -393,7 +400,8 @@ options_list = {
     "calculate_hamiltonian": ["method", "periodic", "mu_x", "mu_y", "mu_z", "d"],
     "print_dimer_wrapper": ["site1", "site2"],
     "print_cluster_xyz": ["mode"],
-    "calculate_participation_ratio": []
+    "calculate_participation_ratio": [],
+    "calculate_diffusion": ["mode", "thermal", "bins", "gamma", "temperature"]
 }
 
 
