@@ -94,7 +94,8 @@ class Molecule:
         for i in range(self.num_atoms):
             v_1 = self.atom_coord[i:i + 1]
             v_2 = other.atom_coord[i:i + 1]
-            diff = np.linalg.norm(v_1 - v_2)
+            diff_v = v_1 - v_2
+            diff = diff_v[0, 0] + diff_v[0, 1] + diff_v[0, 2]
             if diff < 0.05:
                 return True
         return False
