@@ -475,7 +475,7 @@ class Cluster:
     def __init__(self):
         self.pre_molecules = []
         self.cif = CifFile
-        self.pre_molecules
+        self.pre_molecules = []
         self.molecules = []
         self.mass_centers = []
         self.a = 0
