@@ -15,6 +15,7 @@ class Graph:
         self.peak_threshold = 0.01
 
     def read(self, path: str):
+        contents = []
         try:
             file = open(path, "r")
             contents = file.readlines()
@@ -63,19 +64,13 @@ class Graph:
                 self.data_y_cut.append(self.data_y[i])
 
     def fitting(self):
-        def G(x, alpha):
-            return np.sqrt(np.log(2) / np.pi) / alpha \
-                   * np.exp(-(x / alpha) ** 2 * np.log(2))
 
-        def L(x, gamma):
-            return gamma / np.pi / (x ** 2 + gamma ** 2)
-
-        def V(x, alpha, gamma):
+        def voight(x, alpha, gamma):
             sigma = alpha / np.sqrt(2 * np.log(2))
-            max = np.real(wofz((1j * gamma) / sigma / np.sqrt(2))) / sigma / np.sqrt(2 * np.pi)
-            return np.real(wofz((x + 1j * gamma) / sigma / np.sqrt(2))) / sigma / np.sqrt(2 * np.pi) / max
+            max_v = np.real(wofz((1j * gamma) / sigma / np.sqrt(2))) / sigma / np.sqrt(2 * np.pi)
+            return np.real(wofz((x + 1j * gamma) / sigma / np.sqrt(2))) / sigma / np.sqrt(2 * np.pi) / max_v
 
-        a, b = scipy.optimize.curve_fit(V, self.data_x_cut, self.data_y_cut)
+        a, b = scipy.optimize.curve_fit(voight, self.data_x_cut, self.data_y_cut)
         return a, b
 
 
