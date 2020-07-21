@@ -7,6 +7,8 @@ class Graph:
     def __init__(self):
         self.data_x = []
         self.data_y = []
+        self.data_x_cut = []
+        self.data_y_cut = []
         self.peaks = []
         self.peak_threshold = 0.01
 
@@ -42,6 +44,21 @@ class Graph:
                         break
                 if not flag:
                     self.peaks.append(i)
+
+    def cut_peak(self, x):
+        x_peaks_shifted = []
+        for i in range(len(self.peaks)):
+            x_peaks_shifted[i] = self.data_x[self.peaks[i]] - x
+        peak_of_interest = x_peaks_shifted.index(min(x_peaks_shifted))
+        data_x_shifted = []
+        for i in range(len(self.data_x)):
+            data_x_shifted.append(self.data_x[i] - x)
+        min_lim = data_x_shifted[peak_of_interest - 1]
+        max_lim = data_x_shifted[peak_of_interest + 1]
+        for i in range(len(data_x_shifted)):
+            if data_x_shifted[i] > min_lim and data_x_shifted < max_lim:
+                self.data_x_cut.append(data_x_shifted[i])
+                self.data_y_cut.append(self.data_y[i])
 
 
 def common(E, c, mu, N, sigma):
