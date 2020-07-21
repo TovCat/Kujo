@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize
+from scipy.special import wofz
 
 
 class Graph:
@@ -59,6 +61,22 @@ class Graph:
             if data_x_shifted[i] > min_lim and data_x_shifted < max_lim:
                 self.data_x_cut.append(data_x_shifted[i])
                 self.data_y_cut.append(self.data_y[i])
+
+    def fitting(self):
+        def G(x, alpha):
+            return np.sqrt(np.log(2) / np.pi) / alpha \
+                   * np.exp(-(x / alpha) ** 2 * np.log(2))
+
+        def L(x, gamma):
+            return gamma / np.pi / (x ** 2 + gamma ** 2)
+
+        def V(x, alpha, gamma):
+            sigma = alpha / np.sqrt(2 * np.log(2))
+            max = np.real(wofz((1j * gamma) / sigma / np.sqrt(2))) / sigma / np.sqrt(2 * np.pi)
+            return np.real(wofz((x + 1j * gamma) / sigma / np.sqrt(2))) / sigma / np.sqrt(2 * np.pi) / max
+
+        a, b = scipy.optimize.curve_fit(V, self.data_x_cut, self.data_y_cut)
+        return a, b
 
 
 def common(E, c, mu, N, sigma):
