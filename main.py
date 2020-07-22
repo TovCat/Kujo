@@ -72,29 +72,21 @@ def options_parse(dsp: dict, opt: list):
             exit(-1)
 
 
-def read_cube(options_dispatcher: dict):
+def read_file(options_dispatcher: dict):
+    file_types = {
+        "cube": cube.read,
+        "cub": cube.read,
+        "cif": cluster.init_cif,
+        "chg": charges.read,
+        "out": orca.read
+    }
+    w = options_dispatcher['file'].split('.')
+    full_path = getcwd() + f"/{options_dispatcher['file']}"
     global cube
-    full_path_cube = getcwd() + f"/{options_dispatcher['file']}"
-    cube.read(full_path_cube)
-
-
-def read_cif(options_dispatcher: dict):
     global cif
-    full_path_cif = getcwd() + f"/{options_dispatcher['file']}"
-    cif.read(full_path_cif)
-    cluster.init_cif(cif)
-
-
-def read_charges(options_dispatcher: dict):
     global charges
-    full_path_charges = getcwd() + f"/{options_dispatcher['file']}"
-    charges.read(full_path_charges)
-
-
-def read_orca(options_dispatcher: dict):
     global orca
-    full_path_orca = getcwd() + f"/{options_dispatcher['file']}"
-    orca.read(full_path_orca)
+    file_types[w[1]](full_path)
 
 
 def cube_integration_wrapper(par_list: list):
@@ -365,10 +357,7 @@ dispatcher = {
     "translated_coupling_extended_dipole": translated_coupling_extended_dipole,
     "translated_coupling_dipole": translated_coupling_dipole,
     "translated_coupling_charges": translated_coupling_charges,
-    "read_cube": read_cube,
-    "read_cif": read_cif,
-    "read_orca": read_orca,
-    "read_charges": read_charges,
+    "read_file": read_file,
     "build_cluster": build_cluster,
     "print_cluster_kujo": reader.cif.Cluster.print_cluster_readable,
     "generate_disorder": generate_disorder,
@@ -381,10 +370,7 @@ dispatcher = {
 }
 
 options_list = {
-    "read_cube": ["file"],
-    "read_cif": ["file"],
-    "read_charges": ["file"],
-    "read_orca": ["file"],
+    "read_file": ["file"],
     "translated_coupling_td_integration": ["vector", "vector_cif", "multiplier"],
     "build_cluster": ["a", "b", "c"],
     "translated_coupling_extended_dipole": ["vector", "vector_cif", "multiplier", "d", "mu_x", "mu_y", "mu_z"],
