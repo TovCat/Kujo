@@ -73,19 +73,19 @@ def options_parse(dsp: dict, opt: list):
 
 
 def read_file(options_dispatcher: dict):
+    global cube
+    global cif
+    global charges
+    global orca
     file_types = {
         "cube": cube.read,
         "cub": cube.read,
-        "cif": cluster.init_cif,
+        "cif": cif.read,
         "chg": charges.read,
         "out": orca.read
     }
     w = options_dispatcher['file'].split('.')
     full_path = getcwd() + f"/{options_dispatcher['file']}"
-    global cube
-    global cif
-    global charges
-    global orca
     file_types[w[1]](full_path)
 
 
