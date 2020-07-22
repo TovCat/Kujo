@@ -98,8 +98,8 @@ def read_orca(options_dispatcher: dict):
 
 
 def cube_integration_wrapper(par_list: list):
-    if max_w != -1:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+    if parameters["max_w"] != -1:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
             results = executor.map(reader.cube.integrate_cubes, par_list)
             for x in results:
                 r = r + x
@@ -130,21 +130,6 @@ def translated_coupling_td_integration(options_dispatcher: dict):
     for i_c in range(cube.steps[0, 0]):
         it.append([mol1, mol2, cube, i_c])
     return cube_integration_wrapper(it)
-
-
-def set_hard_cutoff(options_dispatcher: dict):
-    global hard_cutoff
-    hard_cutoff = float(options_dispatcher["value"])
-
-
-def set_int_cutoff(options_dispatcher: dict):
-    global int_cutoff
-    int_cutoff = float(options_dispatcher["value"])
-
-
-def set_max_workers(options_dispatcher: dict):
-    global max_w
-    max_w = int(options_dispatcher["value"])
 
 
 def build_cluster(options_dispatcher: dict):
@@ -343,14 +328,14 @@ def calculate_diffusion(options_dispatcher: dict):
                 par_list.append([H_disorder, E, c, cluster.r_matrix, distribution[i_cd], gamma, T])
             else:
                 par_list.append([H_disorder, E, c, cluster.r_matrix, distribution[i_cd], gamma])
-        if max_w != -1:
+        if parameters["max_w"] != -1:
             if options_dispatcher["thermal"]:
-                with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
                     results = executor.map(energy.diffusion.diffusion_thermal, par_list)
                     for x in results:
                         diffusion_specific_disorder.append(x)
             else:
-                with concurrent.futures.ProcessPoolExecutor(max_workers=max_w) as executor:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
                     results = executor.map(energy.diffusion.diffusion_no_thermal, par_list)
                     for x in results:
                         diffusion_specific_disorder.append(x)
@@ -386,9 +371,6 @@ dispatcher = {
     "read_charges": read_charges,
     "build_cluster": build_cluster,
     "print_cluster_kujo": reader.cif.Cluster.print_cluster_readable,
-    "set_hard_cutoff": set_hard_cutoff,
-    "set_int_cutoff": set_int_cutoff,
-    "set_max_workers": set_max_workers,
     "generate_disorder": generate_disorder,
     "calculate_coupling": calculate_coupling,
     "print_dimer": utility.kujo_io.print_dimer,
@@ -404,9 +386,6 @@ options_list = {
     "read_charges": ["file"],
     "read_orca": ["file"],
     "translated_coupling_td_integration": ["vector", "vector_cif", "multiplier"],
-    "set_hard_cutoff": ["value"],
-    "set_int_cutoff": ["value"],
-    "set_max_workers": ["value"],
     "build_cluster": ["a", "b", "c"],
     "translated_coupling_extended_dipole": ["vector", "vector_cif", "multiplier", "d", "mu_x", "mu_y", "mu_z"],
     "translated_coupling_dipole": ["vector", "vector_cif", "multiplier", "d", "mu_x", "mu_y", "mu_z"],
@@ -423,6 +402,7 @@ options_list = {
 
 if __name__ == "__main__":
     execute_time = time.time()
+    read_options()
     instructions, options = utility.kujo_io.read_input("input.txt")
     suffix = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
     out = f"/output{suffix}.out"
