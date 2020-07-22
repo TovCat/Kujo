@@ -24,6 +24,8 @@ parameters = {
 
 def read_options():
     global parameters
+    full_path = ""
+    contents = []
     try:
         full_path = getcwd() + "/config.ini"
         file = open(full_path, "r")
@@ -77,6 +79,7 @@ def read_file(options_dispatcher: dict):
     global cif
     global charges
     global orca
+    full_path = ""
     file_types = {
         "cube": cube.read,
         "cub": cube.read,
@@ -127,6 +130,7 @@ def translated_coupling_td_integration(options_dispatcher: dict):
 def build_cluster(options_dispatcher: dict):
     global cluster
     global cif
+    cluster.init_cif(cif)
     cluster.build()
     cluster.to_cartesian()
     if not ("print_cluster_xyz_premolecules" in instructions):
