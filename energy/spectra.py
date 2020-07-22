@@ -74,7 +74,7 @@ class Graph:
         return a, b
 
 
-def generate_plot(E, c, mu, bins, sigma):
+def generate_plot(E, c, mu, bins, sigma, dpi):
     EminA = np.min(E)
     EmaxA = np.max(E)
     if (EmaxA-EminA) / sigma > bins:
@@ -99,4 +99,5 @@ def generate_plot(E, c, mu, bins, sigma):
     plt.plot(Ex, Ny/np.max(Ny))
     plt.xlabel('eV')
     plt.ylabel('Intensity')
+    plt.figure(dpi=dpi)
     plt.savefig('plot.png')
