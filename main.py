@@ -134,7 +134,15 @@ def build_cluster(options_dispatcher: dict):
     cluster.build()
     cluster.to_cartesian()
     if not ("print_cluster_xyz_premolecules" in instructions):
-        cluster.connectivity()
+        p = list(range(len(cluster.molecules)))
+        l = []
+        with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
+            results = executor.map(cluster.connectivity, p)
+            for x in results:
+                l.append(x)
+        for n in range(len(cluster.molecules)):
+            for m in range(len(cluster.molecules)):
+                cluster.bonds[n, m] = l[n][m]
         cluster.rebuild()
         cluster.find_rotations()
         cluster.multiply(options_dispatcher["a"], options_dispatcher["b"], options_dispatcher["c"])

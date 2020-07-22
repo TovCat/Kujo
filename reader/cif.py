@@ -267,21 +267,25 @@ class Cluster:
         self.bonds = np.zeros((len(self.pre_molecules) * self.pre_molecules[0].num_atoms, len(self.pre_molecules) *
                                self.pre_molecules[0].num_atoms))
 
-    def connectivity(self):
-        for n in range(len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-            for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
-                m1 = n // self.pre_molecules[0].num_atoms
-                m1n = n % self.pre_molecules[0].num_atoms
-                m2 = k // self.pre_molecules[0].num_atoms
-                m2n = k % self.pre_molecules[0].num_atoms
-                v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
-                v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
-                dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
-                limit_dist = utility.dictionaries.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
-                             utility.dictionaries.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
-                if dist <= limit_dist:
-                    self.bonds[n, k] = 1
-                    self.bonds[k, n] = 1
+    def connectivity(self, n):
+        l = []
+        for i in range(n):
+            l.append(0)
+        for k in range(n + 1, len(self.pre_molecules) * self.pre_molecules[0].num_atoms):
+            m1 = n // self.pre_molecules[0].num_atoms
+            m1n = n % self.pre_molecules[0].num_atoms
+            m2 = k // self.pre_molecules[0].num_atoms
+            m2n = k % self.pre_molecules[0].num_atoms
+            v1 = self.pre_molecules[m1].atom_coord[m1n:m1n + 1]
+            v2 = self.pre_molecules[m2].atom_coord[m2n:m2n + 1]
+            dist = np.linalg.norm(np.matrix.transpose(v1) - np.matrix.transpose(v2))
+            limit_dist = utility.dictionaries.covalent_radius[self.pre_molecules[m1].atom_label[m1n]] + \
+                         utility.dictionaries.covalent_radius[self.pre_molecules[m2].atom_label[m2n]]
+            if dist <= limit_dist:
+                l.append(1)
+            else:
+                l.append(0)
+        return l
 
     def build_rmc(self):
         for i in range(len(self.molecules)):
