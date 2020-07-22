@@ -18,9 +18,25 @@ charges = reader.charges.Charges()
 orca = reader.orca.Orca()
 H = np.zeros((3, 3))
 disorders = []
-max_w = -1
-hard_cutoff = 0.0
-int_cutoff = 0.0
+parameters = {
+}
+
+
+def read_options():
+    global parameters
+    try:
+        full_path = getcwd() + "/config.ini"
+        file = open(full_path, "r")
+        contents = file.readlines()
+        file.close()
+    except IOError:
+        utility.kujo_io.output_error("Could not open input file at: " + full_path, -1)
+    for i in range(len(contents)):
+        words = contents[i].split("=")
+        try:
+            parameters[words[0]] = float(words[1])
+        except ValueError:
+            exit(-1)
 
 
 def options_parse(dsp: dict, opt: list):
