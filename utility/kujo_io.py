@@ -3,6 +3,10 @@ import reader.cif
 import reader.cube
 
 
+def clear_string(a: str):
+    return a.replace(" ", "").replace("\t", "").replace("\n", "")
+
+
 def output_error(text: str, error_code: int):
     full_path = getcwd()
     file = open(full_path + "/error_msg.txt", "w")
@@ -12,43 +16,48 @@ def output_error(text: str, error_code: int):
 
 
 def read_input(path: str):
-    full_path = getcwd() + "/" + path
     contents = []
     try:
-        file = open(full_path, "r")
+        file = open(path, "r")
         contents = file.readlines()
         file.close()
     except OSError:
-        output_error("Could not open input file at: " + full_path, -1)
+        output_error("Could not open input file at: " + path, -1)
     instructions = []
     options = []
     if len(contents) == 0:
         output_error("Empty input file!", -1)
+    for_pop = []
     for x in contents:
-        if ":" in x:
-            words = x.split(":")
-            instructions.append(words[0].strip())
-            words[1] = words[1].strip()
-            pre_options1 = words[1].split(";")
-            flag = 0
-            for x in pre_options1:
-                x = x.strip()
-                if len(pre_options1) == 1:
-                    options.append(x.split("="))
-                elif flag == 0:
-                    options.append(x.split("="))
-                    flag = len(options) - 1
-                else:
-                    pre_options2 = x.split("=")
-                    for y in pre_options2:
-                        options[flag].append(y)
-        else:
-            instructions.append(x)
-            options.append("")
-    if len(options) != 0:
-        for x in range(len(options)):
-            for y in range(len(options[x])):
-                options[x][y] = options[x][y].strip()
+        contents[contents.index(x)] = x.strip().lower()
+        if contents[contents.index(x)] == "" or contents[contents.index(x)][0] == "#":
+            for_pop.append(contents.index(x))
+    for i in range(len(for_pop)):
+        contents.pop(for_pop[i])
+    for_slice = [0]
+    sliced = []
+    for i in range(len(contents)):
+        if contents[i] == "end":
+            for_slice.append(i)
+            temp = []
+            for i1 in range(for_slice[len(for_slice) - 2], for_slice[len(for_slice) - 1]):
+                temp.append(contents[i])
+            sliced.append(temp)
+    for i in range(len(sliced)):
+        instructions.append(sliced[i][0])
+        for i1 in range(len(sliced[i])):
+            words = sliced[i][i1].split("=")
+            try:
+                a = float(words[1])
+            except ValueError:
+                if "," in words[1]:
+                    a = words[1].split(",")
+                    for x in range(len(a)):
+                        try:
+                            a[x] = float(a[x])
+                        except ValueError:
+                            pass
+            options.append([words[0], a])
     return instructions, options
 
 

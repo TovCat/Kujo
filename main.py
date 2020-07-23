@@ -79,7 +79,6 @@ def read_file(options_dispatcher: dict):
     global cif
     global charges
     global orca
-    full_path = ""
     file_types = {
         "cube": cube.read,
         "cub": cube.read,
