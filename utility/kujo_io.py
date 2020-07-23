@@ -29,7 +29,7 @@ def read_input(path: str):
         output_error("Empty input file!", -1)
     for_pop = []
     for x in contents:
-        contents[contents.index(x)] = x.strip().lower()
+        contents[contents.index(x)] = clear_string(x).lower()
         if contents[contents.index(x)] == "" or contents[contents.index(x)][0] == "#":
             for_pop.append(contents.index(x))
     for i in range(len(for_pop)):
