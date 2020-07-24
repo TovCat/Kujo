@@ -3,6 +3,12 @@ import reader.cif
 import reader.cube
 
 
+out = ""
+version = "24.07.alpha"
+parameters = {
+}
+
+
 def clear_string(a: str):
     return a.replace(" ", "").replace("\t", "").replace("\n", "")
 
@@ -13,6 +19,25 @@ def output_error(text: str, error_code: int):
     file.write(text)
     file.close()
     exit(error_code)
+
+
+def read_options():
+    global parameters
+    full_path = ""
+    contents = []
+    try:
+        full_path = getcwd() + "/config.ini"
+        file = open(full_path, "r")
+        contents = file.readlines()
+        file.close()
+    except IOError:
+        output_error("Could not open input file at: " + full_path, -1)
+    for i in range(len(contents)):
+        words = contents[i].split("=")
+        try:
+            parameters[words[0]] = float(words[1])
+        except ValueError:
+            exit(-1)
 
 
 def read_input(path: str):

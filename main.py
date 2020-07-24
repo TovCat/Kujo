@@ -18,27 +18,6 @@ charges = reader.charges.Charges()
 orca = reader.orca.Orca()
 H = np.zeros((3, 3))
 disorders = []
-parameters = {
-}
-
-
-def read_options():
-    global parameters
-    full_path = ""
-    contents = []
-    try:
-        full_path = getcwd() + "/config.ini"
-        file = open(full_path, "r")
-        contents = file.readlines()
-        file.close()
-    except IOError:
-        utility.kujo_io.output_error("Could not open input file at: " + full_path, -1)
-    for i in range(len(contents)):
-        words = contents[i].split("=")
-        try:
-            parameters[words[0]] = float(words[1])
-        except ValueError:
-            exit(-1)
 
 
 def options_parse(dsp: dict, opt: list):
@@ -402,7 +381,7 @@ if __name__ == "__main__":
     read_options()
     instructions, options = utility.kujo_io.read_input("input.txt")
     suffix = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
-    out = f"/output{suffix}.out"
+    out = f"{getcwd()}/output{suffix}.out"
     for i in range(len(instructions)):
         str_execute_time = time.time()
         if len(options) != 0:
