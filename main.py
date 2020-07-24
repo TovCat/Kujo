@@ -376,12 +376,23 @@ options_list = {
 }
 
 
+def input_sanity_check(inst, opt: list):
+    for x in inst:
+        if x in dispatcher:
+            for y in range(len(opt[inst.index(x)]) // 2):
+                if not (opt[inst.index(x)][y * 2] in options_list[x]):
+                    utility.kujo_io.output_error(f"Incorrect option name 'opt[inst.index(x)][y * 2]' for routine {x}")
+        else:
+            utility.kujo_io.output_error(f"Incorrect routine name '{x}'")
+
+
 if __name__ == "__main__":
     execute_time = time.time()
     utility.kujo_io.read_options()
     instructions, options = utility.kujo_io.read_input("input.txt")
     suffix = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
     utility.kujo_io.out = f"{getcwd()}/output{suffix}.out"
+    input_sanity_check()
     for i in range(len(instructions)):
         str_execute_time = time.time()
         if len(options) != 0:
