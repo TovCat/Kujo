@@ -378,10 +378,10 @@ options_list = {
 
 if __name__ == "__main__":
     execute_time = time.time()
-    read_options()
+    utility.kujo_io.read_options()
     instructions, options = utility.kujo_io.read_input("input.txt")
     suffix = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
-    out = f"{getcwd()}/output{suffix}.out"
+    utility.kujo_io.out = f"{getcwd()}/output{suffix}.out"
     for i in range(len(instructions)):
         str_execute_time = time.time()
         if len(options) != 0:

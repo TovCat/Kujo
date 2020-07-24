@@ -23,9 +23,24 @@ def output_error(text: str, error_code: int):
         Reason: {text}
         Time: {crash_time}
         """
-    file.write(text)
+    file.write(error_output)
     file.close()
     exit(error_code)
+
+
+def output_result(instruction: str, options: list, result):
+    file = open(out, "w")
+    result_output = f"""
+        Calculation finished!
+        Routine: {instruction}
+        Options:
+        """
+    for i in range(len(options) // 2):
+        result_output += f"\n{options[2 * i]} = {options[2 * i + 1]}"
+    exec_time = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
+    result_output += f"\nResult: {result}\nTime: {exec_time}"
+    file.write(result_output)
+    file.close()
 
 
 def initiate_output():
@@ -79,7 +94,7 @@ def read_input(path: str):
     instructions = []
     options = []
     if len(contents) == 0:
-        output_error("Empty input file!", -1)
+        output_error("Empty input file.", -1)
     for_pop = []
     for x in contents:
         contents[contents.index(x)] = clear_string(x).lower()
