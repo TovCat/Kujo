@@ -71,8 +71,8 @@ def read_file(options_dispatcher: dict):
 
 
 def cube_integration_wrapper(par_list: list):
-    if parameters["max_w"] != -1:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
+    if utility.kujo_io.parameters["max_w"] != -1:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=utility.kujo_io.parameters["max_w"]) as executor:
             results = executor.map(reader.cube.integrate_cubes, par_list)
             for x in results:
                 r = r + x
@@ -114,7 +114,7 @@ def build_cluster(options_dispatcher: dict):
     if not ("print_cluster_xyz_premolecules" in instructions):
         p = list(range(len(cluster.molecules)))
         l = []
-        with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=utility.kujo_io.parameters["max_w"]) as executor:
             results = executor.map(cluster.connectivity, p)
             for x in results:
                 l.append(x)
@@ -310,14 +310,14 @@ def calculate_diffusion(options_dispatcher: dict):
                 par_list.append([H_disorder, E, c, cluster.r_matrix, distribution[i_cd], gamma, T])
             else:
                 par_list.append([H_disorder, E, c, cluster.r_matrix, distribution[i_cd], gamma])
-        if parameters["max_w"] != -1:
+        if utility.kujo_io.parameters["max_w"] != -1:
             if options_dispatcher["thermal"]:
-                with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=utility.kujo_io.parameters["max_w"]) as executor:
                     results = executor.map(energy.diffusion.diffusion_thermal, par_list)
                     for x in results:
                         diffusion_specific_disorder.append(x)
             else:
-                with concurrent.futures.ProcessPoolExecutor(max_workers=parameters["max_w"]) as executor:
+                with concurrent.futures.ProcessPoolExecutor(max_workers=utility.kujo_io.parameters["max_w"]) as executor:
                     results = executor.map(energy.diffusion.diffusion_no_thermal, par_list)
                     for x in results:
                         diffusion_specific_disorder.append(x)
