@@ -16,8 +16,13 @@ def clear_string(a: str):
 
 
 def output_error(text: str, error_code: int):
-    full_path = getcwd()
-    file = open(full_path + "/error_msg.txt", "w")
+    file = open(out, "w")
+    crash_time = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
+    error_output = f"""
+        !!!CALCULATION CRASHED!!!
+        Reason: {text}
+        Time: {crash_time}
+        """
     file.write(text)
     file.close()
     exit(error_code)
@@ -47,7 +52,6 @@ def initiate_output():
 
 def read_options():
     global parameters
-    full_path = ""
     contents = []
     try:
         full_path = getcwd() + "/config.ini"
@@ -55,7 +59,7 @@ def read_options():
         contents = file.readlines()
         file.close()
     except IOError:
-        output_error("Could not open input file at: " + full_path, -1)
+        exit(-1)
     for i in range(len(contents)):
         words = contents[i].split("=")
         try:
