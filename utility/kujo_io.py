@@ -1,8 +1,10 @@
 from os import getcwd
 import reader.cif
 import reader.cube
+import time
 
 
+inp = ""
 out = ""
 version = "24.07.alpha"
 parameters = {
@@ -19,6 +21,28 @@ def output_error(text: str, error_code: int):
     file.write(text)
     file.close()
     exit(error_code)
+
+
+def initiate_output():
+    file = open(out, "w")
+    exec_time = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
+    for_write = f"""
+        ====================================================================
+        Kujo: Python code for exciton dynamics in organic single crystals
+        
+        Author: Igor Koskin
+        Affiliation: Novosibirsk Institute of Organic Chemistry
+        e-mail: osingran@yandex.ru
+        
+        version: {version}
+        ====================================================================
+
+        Executed input file: {inp}
+        Time: {exec_time}
+        !!!DO NOT DELETE THE INPUT FILE. THE CODE DOES NOT SAVE INPUT OPTIONS IN THE OUTPUT!!!
+
+        """
+    file.write(for_write)
 
 
 def read_options():
