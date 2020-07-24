@@ -28,17 +28,24 @@ def output_error(text: str, error_code: int):
     exit(error_code)
 
 
-def output_result(instruction: str, options: list, result):
+def output_result(instruction: str, options: list, result, finish_time):
     file = open(out, "w")
-    result_output = f"""
-        Calculation finished!
-        Routine: {instruction}
-        Options:
-        """
+    if result is not None:
+        result_output = f"""
+            Calculation finished!
+            Routine: {instruction}
+            Options: """
+    else:
+        result_output = f"""Routine finished!
+            Routine: {instruction}
+            Options: """
     for i in range(len(options) // 2):
         result_output += f"\n{options[2 * i]} = {options[2 * i + 1]}"
     exec_time = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
-    result_output += f"\nResult: {result}\nTime: {exec_time}"
+    if result is not None:
+        result_output += f"\nResult: {result}\nExecution (wall) time: {finish_time} min.\nCurrent time and date: {exec_time}"
+    else:
+        result_output += f"\nExecution (wall) time: {finish_time} min.\nCurrent time and date: {exec_time}"
     file.write(result_output)
     file.close()
 
@@ -54,15 +61,32 @@ def initiate_output():
         Affiliation: Novosibirsk Institute of Organic Chemistry
         e-mail: osingran@yandex.ru
         
-        version: {version}
+        Version: {version}
         ====================================================================
 
         Executed input file: {inp}
-        Time: {exec_time}
-        !!!DO NOT DELETE THE INPUT FILE. THE CODE DOES NOT SAVE INPUT OPTIONS IN THE OUTPUT!!!
+        Time and date: {exec_time}
+        !!!DO NOT DELETE THE INPUT FILE. KUJO DOES NOT SAVE INPUT INSTRUCTIONS IN THE OUTPUT!!!
 
         """
     file.write(for_write)
+    file.close()
+
+
+def finalize_output(overall_time):
+    file = open(out, "w")
+    exec_time = f"-{str(time.localtime().tm_mday)}-{str(time.localtime().tm_mon)}-{str(time.localtime().tm_year)}-{str(time.localtime().tm_hour)}-{str(time.localtime().tm_min)}-{str(time.localtime().tm_sec)}"
+    for_write = f"""
+        ====================================================================
+        CALCULATION TERMINATED NORMALLY
+
+        Input file: {inp}
+        Overall execution wall time: {overall_time}
+        Time and date: {exec_time}
+        ====================================================================
+        """
+    file.write(for_write)
+    file.close()
 
 
 def read_options():

@@ -393,17 +393,7 @@ if __name__ == "__main__":
             result = dispatcher[instructions[i]](opt_to_method)
         else:
             result = dispatcher[instructions[i]]()
-        full_path = getcwd() + out
         finish_time = round((time.time() - str_execute_time) / 60, 4)
-        if result is not None:
-            file = open(full_path, "a+")
-            file.write(f"{instructions[i]} with options {options[i]} returned ({finish_time} mins): {result}\n")
-            file.close()
-        else:
-            file = open(full_path, "a+")
-            file.write(f"Executed {instructions[i]} with options {options[i]}\n")
-            file.close()
+        utility.kujo_io.output_result(instructions[i], options[i], result, finish_time)
     overall_time = round((time.time() - execute_time) / 60, 4)
-    file = open(full_path, "a+")
-    file.write(f"Finished after {overall_time} minutes")
-    file.close()
+    utility.kujo_io.finalize_output(overall_time)
